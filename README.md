@@ -4,8 +4,6 @@ Interaktywna aplikacja edukacyjna do nauki obsługi myszy i touchpada dla uczni�
 
 🔗 **[► Uruchom grę](https://krzjur-oss.github.io/Szkola-myszki)**
 
-> ⚠️ Zmień `TWOJA-NAZWA` na swoją nazwę użytkownika GitHub po opublikowaniu.
-
 ---
 
 ## 🎮 Ćwiczenia
