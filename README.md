@@ -2,7 +2,7 @@
 
 Interaktywna aplikacja edukacyjna do nauki obsługi myszy i touchpada dla uczniów szkół podstawowych.
 
-🔗 **[► Uruchom grę](https://TWOJA-NAZWA.github.io/szkola-myszki/)**
+🔗 **[► Uruchom grę](https://krzjur-oss.github.io/szkola-myszki/)**
 
 > ⚠️ Zmień `TWOJA-NAZWA` na swoją nazwę użytkownika GitHub po opublikowaniu.
 
