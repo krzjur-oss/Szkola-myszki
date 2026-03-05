@@ -46,7 +46,15 @@ body {
   display: flex; flex-direction: column;
   align-items: center;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Menu może być wyższe niż ekran – pozwól na scroll */
+.menu-screen {
+  height: auto;
+  min-height: 100%;
 }
 
 /* ── Menu ────────────────────────────────────────────────── */
@@ -68,6 +76,7 @@ body {
   background: var(--panel); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 12px 20px;
   width: 100%; max-width: 720px;
+  box-sizing: border-box;
 }
 .stat-item { text-align: center; flex: 1; min-width: 70px; }
 .stat-value { font-family: 'Fredoka One', cursive; font-size: 1.5rem; }
@@ -75,7 +84,7 @@ body {
 
 .categories {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   gap: 14px; width: 100%; max-width: 720px;
 }
 .category-card {
