@@ -1275,8 +1275,6 @@ function checkDragWin(total) {
 let mazeCtx, mazeCanvas, mazeData = {}, mazeAnimFrame = null;
 
 // Rozmiar komórki labiryntu zależny od poziomu
-const CELL_SIZES = [56, 40, 28]; // Łatwy=duże komórki, Trudny=małe
-
 function startMaze(cfg, levelIdx) {
   clearInterval(gameTimer);
   const area = document.getElementById('game-area');
@@ -1295,15 +1293,22 @@ function startMaze(cfg, levelIdx) {
   mazeCanvas = canvas;
   mazeCtx = canvas.getContext('2d');
 
-  // Poziom trudności wpływa na:
-  // 1. Rozmiar komórek → im mniejsze, tym więcej komórek, dłuższe korytarze
-  // 2. Szerokość korytarza (margin zderzenia ze ścianą)
-  // 3. Czas na ukończenie
-  const cellSize = CELL_SIZES[levelIdx] ?? 40;
-  const cols = Math.max(Math.floor((canvas.width  - 20) / cellSize), 4);
-  const rows = Math.max(Math.floor((canvas.height - 60) / cellSize), 4);
+  // Liczba komórek zależna od poziomu – labirynt zawsze mieści się w ekranie
+  // cellSize jest wyliczany tak by cols*cellSize i rows*cellSize <= dostępna przestrzeń
+  const padding = 40; // margines od krawędzi canvasu
+  const targetCols = [6,  10, 15][levelIdx] ?? 10;
+  const targetRows = [4,   7, 10][levelIdx] ?? 7;
+
+  // Dopasuj cellSize do ekranu – nigdy nie wychodź poza obszar
+  const maxCellW = Math.floor((canvas.width  - padding * 2) / targetCols);
+  const maxCellH = Math.floor((canvas.height - padding * 2) / targetRows);
+  const cellSize = Math.max(Math.min(maxCellW, maxCellH), 20); // min 20px
+
+  const cols = targetCols;
+  const rows = targetRows;
 
   const maze = generateMaze(cols, rows);
+  // Wyśrodkuj labirynt na canvasie
   const offsetX = Math.floor((canvas.width  - cols * cellSize) / 2);
   const offsetY = Math.floor((canvas.height - rows * cellSize) / 2);
 
