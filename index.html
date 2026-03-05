@@ -849,7 +849,9 @@ function addHit(x, y, pts = 100) {
 }
 function addMiss(x, y) {
   gameData.miss++;
-  spawnHitEffect(x, y, -10, '#ff1744', '-10');
+  const penalty = 15;
+  gameData.score = Math.max(0, gameData.score - penalty);
+  spawnHitEffect(x, y, -penalty, '#ff1744', '-' + penalty);
   updateHUD();
 }
 
@@ -1017,7 +1019,8 @@ function makeTarget(shape, color, size, pos, isGood, levelIdx) {
     const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
     const cx = r.left - ar.left + r.width/2, cy = r.top - ar.top + r.height/2;
     if (t.dataset.good === '1') {
-      addHit(cx, cy, 150);
+      const pts = 100 + Math.round(80 * (gameData.time / gameData.maxTime));
+      addHit(cx, cy, pts);
       t.classList.add('shrinking');
       setTimeout(() => {
         t.remove();
@@ -1110,7 +1113,8 @@ function spawnDoubleTarget(cfg) {
     if (clicks >= 2) {
       clicks = 0;
       const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
-      addHit(r.left-ar.left+r.width/2, r.top-ar.top+r.height/2, 180);
+      const pts = 120 + Math.round(80 * (gameData.time / gameData.maxTime));
+      addHit(r.left-ar.left+r.width/2, r.top-ar.top+r.height/2, pts);
       t.classList.add('shrinking');
       setTimeout(() => { t.remove(); if (gameData.time > 0) spawnDoubleTarget(cfg); }, 150);
     } else {
@@ -1251,7 +1255,8 @@ function tryDrop(el, area, cx, cy) {
         dz.classList.add('done');
         el.classList.add('matched');
         const ar = area.getBoundingClientRect();
-        addHit(dr.left-ar.left+dr.width/2, dr.top-ar.top+dr.height/2, 200);
+        const dragPts = 150 + Math.round(100 * (gameData.time / gameData.maxTime));
+        addHit(dr.left-ar.left+dr.width/2, dr.top-ar.top+dr.height/2, dragPts);
         matched = true;
       } else {
         const ar = area.getBoundingClientRect();
@@ -1512,7 +1517,10 @@ function onMazeMouse(e) {
   if (col === endCol && row === endRow && !mazeData.completed) {
     mazeData.completed = true;
     clearInterval(gameTimer);
-    addHit(mx, my, 500);
+    const timeBonus = Math.round(500 * (gameData.time / gameData.maxTime));
+    const wallPenaltyInScore = mazeData.touches * 20;
+    const mazePts = Math.max(100, 300 + timeBonus - wallPenaltyInScore);
+    addHit(mx, my, mazePts);
     document.removeEventListener('mousemove', onMazeMouse);
     document.removeEventListener('touchmove', onMazeTouchMove);
     setTimeout(endGame, 500);
@@ -1599,7 +1607,8 @@ function spawnMixed(levelIdx) {
       if (precDone) return;
       precDone = true;
       const r = good.getBoundingClientRect(), ar = area.getBoundingClientRect();
-      addHit(r.left - ar.left + r.width/2, r.top - ar.top + r.height/2, 160);
+      const pts = 150 + Math.round(100 * (gameData.time / gameData.maxTime));
+      addHit(r.left - ar.left + r.width/2, r.top - ar.top + r.height/2, pts);
       [...area.querySelectorAll('.target')].forEach(t => { t.classList.add('shrinking'); });
       setTimeout(() => {
         [...area.querySelectorAll('.target')].forEach(t => t.remove());
@@ -1665,7 +1674,8 @@ function spawnMixed(levelIdx) {
     onActivate(t, (e) => {
       e.stopPropagation();
       const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
-      addHit(r.left - ar.left + r.width/2, r.top - ar.top + r.height/2, 120);
+      const pts = 80 + Math.round(70 * (gameData.time / gameData.maxTime));
+      addHit(r.left - ar.left + r.width/2, r.top - ar.top + r.height/2, pts);
       t.classList.add('shrinking');
       setTimeout(() => { t.remove(); if (gameData.time > 0) spawnMixed(levelIdx); }, 150);
     });
@@ -1718,7 +1728,12 @@ function endGame() {
 
   const total = gameData.hits + gameData.miss;
   const acc = total > 0 ? Math.round((gameData.hits / total) * 100) : 0;
-  const stars = acc >= 90 ? 3 : acc >= 70 ? 2 : acc >= 50 ? 1 : 0;
+  // Gwiazdki na podstawie dokładności (70%) i wyniku punktowego (30%)
+  const starsByAcc   = acc >= 90 ? 3 : acc >= 70 ? 2 : acc >= 40 ? 1 : 0;
+  const maxPossible  = gameData.hits * 200; // przybliżony max punktów
+  const scorePct     = maxPossible > 0 ? (gameData.score / maxPossible) * 100 : 0;
+  const starsByScore = scorePct >= 70 ? 3 : scorePct >= 40 ? 2 : scorePct >= 15 ? 1 : 0;
+  const stars = Math.round(starsByAcc * 0.7 + starsByScore * 0.3);
   const emojis = ['😔','😊','🎉','🏆'];
   const titles = ['Nie poddawaj się!', 'Dobra robota!', 'Świetnie!', 'Mistrz!'];
 
