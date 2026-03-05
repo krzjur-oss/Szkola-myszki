@@ -1772,9 +1772,101 @@ function goMenu() {
 }
 
 // =========================================================
+// RESIZE HANDLING
+// =========================================================
+let resizeTimer = null;
+
+const gameAreaObserver = new ResizeObserver(() => {
+  // Debounce – odczekaj 150ms po ostatniej zmianie rozmiaru
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const gameScreen = document.getElementById('game-screen');
+    if (!gameScreen.classList.contains('active')) return; // tylko gdy gra aktywna
+    if (!currentType) return;
+
+    // Przerysuj canvas labiryntu jeśli aktywny
+    if (currentType === 'maze' && mazeData && !mazeData.completed) {
+      const canvas = document.getElementById('maze-canvas');
+      if (!canvas.classList.contains('hidden')) {
+        const area = document.getElementById('game-area');
+        const areaRect = area.getBoundingClientRect();
+        const newW = Math.floor(areaRect.width);
+        const newH = Math.floor(areaRect.height);
+        if (newW === canvas.width && newH === canvas.height) return; // bez zmian
+
+        canvas.width  = newW;
+        canvas.height = newH;
+        canvas.style.width  = newW + 'px';
+        canvas.style.height = newH + 'px';
+
+        // Przelicz pozycje labiryntu dla nowego rozmiaru
+        const { cols, rows, cellSize } = mazeData;
+        const padding = 40;
+        const maxCellW = Math.floor((newW - padding * 2) / cols);
+        const maxCellH = Math.floor((newH - padding * 2) / rows);
+        const newCS = Math.max(Math.min(maxCellW, maxCellH), 20);
+        const newOffX = Math.floor((newW - cols * newCS) / 2);
+        const newOffY = Math.floor((newH - rows * newCS) / 2);
+
+        // Czy kulka była na starcie (zamrożona) czy gdzieś w labiryncie?
+        const wasFrozen = mazeData.frozen;
+        mazeData.cellSize  = newCS;
+        mazeData.offsetX   = newOffX;
+        mazeData.offsetY   = newOffY;
+        mazeData.startX    = newOffX + newCS * 0.5;
+        mazeData.startY    = newOffY + newCS * 0.5;
+        mazeData.wallMargin = mazeData.wallMargin; // bez zmian
+
+        // Przenieś kulkę na start po zmianie rozmiaru (bezpieczne)
+        mazeData.ballX  = mazeData.startX;
+        mazeData.ballY  = mazeData.startY;
+        mazeData.frozen = false;
+
+        mazeCtx = canvas.getContext('2d');
+        drawMaze();
+      }
+    }
+
+    // Dla pozostałych gier – przesuń cele które wyszły poza ekran
+    if (currentType !== 'maze') {
+      const area = document.getElementById('game-area');
+      const areaW = area.offsetWidth;
+      const areaH = area.offsetHeight;
+      area.querySelectorAll('.target, .drag-item').forEach(el => {
+        const left = parseFloat(el.style.left);
+        const top  = parseFloat(el.style.top);
+        const w    = el.offsetWidth;
+        const h    = el.offsetHeight;
+        if (left + w > areaW) el.style.left = Math.max(0, areaW - w) + 'px';
+        if (top  + h > areaH) el.style.top  = Math.max(0, areaH - h) + 'px';
+      });
+    }
+  }, 150);
+});
+
+// =========================================================
 // INIT
 // =========================================================
 loadState();
+
+// Obserwuj game-area od razu (element istnieje w DOM)
+const _initAreaObserver = () => {
+  const area = document.getElementById('game-area');
+  if (area) gameAreaObserver.observe(area);
+};
+_initAreaObserver();
+
+// Po każdym showScreen ponownie podepnij observer (clearGameArea klonuje węzeł)
+const _origShowScreen = showScreen;
+showScreen = function(id) {
+  _origShowScreen(id);
+  if (id === 'game-screen') {
+    setTimeout(() => {
+      const area = document.getElementById('game-area');
+      if (area) { gameAreaObserver.disconnect(); gameAreaObserver.observe(area); }
+    }, 0);
+  }
+};
 </script>
 <script>
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !location.hostname.includes('claudeusercontent')) {
