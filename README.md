@@ -50,19 +50,34 @@ Uczniowie mogą zainstalować grę na swoim urządzeniu bez sklepu z aplikacjami
 - 📊 Statystyki: dokładność, trafienia, pudła
 - 📱 Pełna obsługa dotyku — tablety i ekrany dotykowe
 - 🌐 Działa offline po pierwszym załadowaniu (PWA)
+- 🔗 Nawigacja URL — każda gra ma własny adres (np. `#game/maze/2`)
 - 🚫 Zero instalacji, zero reklam, zero danych do sieci
 
 ---
 
-## 📁 Pliki repozytorium
+## 📁 Struktura plików
 
 ```
-index.html      ← główny plik gry
-manifest.json   ← konfiguracja PWA
-sw.js           ← Service Worker (cache offline)
-icon-192.png    ← ikona aplikacji 192×192
-icon-512.png    ← ikona aplikacji 512×512
-README.md       ← ten plik
+index.html              ← główna powłoka aplikacji (router, CSS, start)
+manifest.json           ← konfiguracja PWA
+sw.js                   ← Service Worker (cache offline)
+icon-192.png            ← ikona aplikacji 192×192
+icon-512.png            ← ikona aplikacji 512×512
+README.md               ← ten plik
+│
+├── core/               ← silnik aplikacji
+│   ├── engine.js       ← timer, punkty, efekty, resize
+│   ├── router.js       ← nawigacja hash-based (#menu, #game/maze/2)
+│   ├── state.js        ← localStorage, statystyki, gwiazdki
+│   └── ui.js           ← ekrany: menu, wybór poziomu, wyniki, tutorial
+│
+└── games/              ← moduły gier (każda gra = osobny plik)
+    ├── click-basic.js  ← Kliknij cel!
+    ├── precision.js    ← Precyzja
+    ├── double-click.js ← Podwójne kliknięcie
+    ├── drag.js         ← Przeciąganie
+    ├── maze.js         ← Labirynt
+    └── mixed.js        ← Wyzwanie!
 ```
 
 ---
@@ -71,7 +86,20 @@ README.md       ← ten plik
 
 Udostępnij uczniom link do strony. Każdy uczeń ma własne statystyki zapisywane lokalnie na jego urządzeniu — nic nie jest wysyłane do sieci.
 
+Możesz linkować bezpośrednio do konkretnej gry i poziomu, np.:
+- `https://krzjur-oss.github.io/Szkola-myszki/#game/maze/1` — Labirynt poziom Łatwy
+- `https://krzjur-oss.github.io/Szkola-myszki/#level/drag` — wybór poziomu Przeciągania
+
 **Zalecane przeglądarki:** Chrome, Edge (najlepsza wydajność)
+
+---
+
+## 🔧 Rozbudowa
+
+Aby dodać nową grę wystarczy:
+1. Stworzyć plik `games/nowa-gra.js` z funkcją `export function init(level) {...}`
+2. Dodać wpis w `core/ui.js` w obiekcie `GAMES`
+3. Dodać wpis w `index.html` w obiekcie `GAME_MODULES`
 
 ---
 
