@@ -5,6 +5,16 @@ const ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './core/state.js',
+  './core/engine.js',
+  './core/router.js',
+  './core/ui.js',
+  './games/click-basic.js',
+  './games/precision.js',
+  './games/double-click.js',
+  './games/drag.js',
+  './games/maze.js',
+  './games/mixed.js',
   'https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap',
 ];
 
