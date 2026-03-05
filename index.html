@@ -1273,7 +1273,9 @@ function checkDragWin(total) {
 // MAZE
 // =========================================================
 let mazeCtx, mazeCanvas, mazeData = {}, mazeAnimFrame = null;
-const CELL = 40;
+
+// Rozmiar komórki labiryntu zależny od poziomu
+const CELL_SIZES = [56, 40, 28]; // Łatwy=duże komórki, Trudny=małe
 
 function startMaze(cfg, levelIdx) {
   clearInterval(gameTimer);
@@ -1281,7 +1283,6 @@ function startMaze(cfg, levelIdx) {
   const canvas = document.getElementById('maze-canvas');
   canvas.classList.remove('hidden');
 
-  // Set pixel dimensions = CSS dimensions to avoid coordinate mismatch
   const areaRect = area.getBoundingClientRect();
   canvas.width  = Math.floor(areaRect.width);
   canvas.height = Math.floor(areaRect.height);
@@ -1294,64 +1295,70 @@ function startMaze(cfg, levelIdx) {
   mazeCanvas = canvas;
   mazeCtx = canvas.getContext('2d');
 
-  const cols = Math.max(Math.floor((canvas.width  - 20) / CELL), 4);
-  const rows = Math.max(Math.floor((canvas.height - 60) / CELL), 4);
+  // Poziom trudności wpływa na:
+  // 1. Rozmiar komórek → im mniejsze, tym więcej komórek, dłuższe korytarze
+  // 2. Szerokość korytarza (margin zderzenia ze ścianą)
+  // 3. Czas na ukończenie
+  const cellSize = CELL_SIZES[levelIdx] ?? 40;
+  const cols = Math.max(Math.floor((canvas.width  - 20) / cellSize), 4);
+  const rows = Math.max(Math.floor((canvas.height - 60) / cellSize), 4);
 
-  const maze = generateMaze(cols, rows, levelIdx);
-  const offsetX = Math.floor((canvas.width  - cols * CELL) / 2);
-  const offsetY = 30;
+  const maze = generateMaze(cols, rows);
+  const offsetX = Math.floor((canvas.width  - cols * cellSize) / 2);
+  const offsetY = Math.floor((canvas.height - rows * cellSize) / 2);
+
+  // Margines zderzenia: łatwy=luźny, trudny=precyzyjny
+  const wallMargin = [10, 7, 4][levelIdx] ?? 7;
 
   mazeData = {
-    maze, cols, rows, offsetX, offsetY,
-    ballX: offsetX + CELL * 0.5, ballY: offsetY + CELL * 0.5,
-    startX: offsetX + CELL * 0.5, startY: offsetY + CELL * 0.5,
+    maze, cols, rows, offsetX, offsetY, cellSize, wallMargin,
+    ballX: offsetX + cellSize * 0.5, ballY: offsetY + cellSize * 0.5,
+    startX: offsetX + cellSize * 0.5, startY: offsetY + cellSize * 0.5,
     endCol: cols - 1, endRow: rows - 1,
     hitWall: false, completed: false, frozen: false, touches: 0
   };
 
-  // Listen on document so movement is never lost (mouse + touch)
   document.addEventListener('mousemove', onMazeMouse);
   document.addEventListener('touchmove', onMazeTouchMove, { passive: false });
   drawMaze();
-  gameData.maxTime = 60 + (2 - levelIdx) * 20;
+
+  // Czas: łatwy=100s, średni=75s, trudny=55s
+  gameData.maxTime = [100, 75, 55][levelIdx] ?? 75;
   gameData.time = gameData.maxTime;
   startTimer();
 }
 
-function generateMaze(cols, rows, difficulty) {
-  // Simple DFS maze
-  const cells = Array.from({length: rows}, () => Array.from({length: cols}, () => ({ visited: false, walls: [true,true,true,true] })));
-  const stack = [];
-  const start = cells[0][0];
-  start.visited = true;
-  stack.push({r:0,c:0});
-  const dirs = [{r:-1,c:0,w:0,ow:2},{r:0,c:1,w:1,ow:3},{r:1,c:0,w:2,ow:0},{r:0,c:-1,w:3,ow:1}];
+function generateMaze(cols, rows) {
+  // DFS – generuje labirynt z gwarantowaną ścieżką od (0,0) do (cols-1,rows-1)
+  const cells = Array.from({length: rows}, () =>
+    Array.from({length: cols}, () => ({ visited: false, walls: [true,true,true,true] }))
+  );
+  const dirs = [
+    {r:-1,c:0,w:0,ow:2},
+    {r:0, c:1,w:1,ow:3},
+    {r:1, c:0,w:2,ow:0},
+    {r:0, c:-1,w:3,ow:1}
+  ];
+  const stack = [{r:0,c:0}];
+  cells[0][0].visited = true;
   while (stack.length) {
     const {r,c} = stack[stack.length-1];
-    const nbrs = dirs.map(d => ({r:r+d.r,c:c+d.c,w:d.w,ow:d.ow}))
+    const nbrs = dirs
+      .map(d => ({r:r+d.r, c:c+d.c, w:d.w, ow:d.ow}))
       .filter(n => n.r>=0 && n.r<rows && n.c>=0 && n.c<cols && !cells[n.r][n.c].visited);
     if (!nbrs.length) { stack.pop(); continue; }
     const n = nbrs[Math.floor(Math.random()*nbrs.length)];
-    cells[r][c].walls[n.w] = false;
+    cells[r][c].walls[n.w]     = false;
     cells[n.r][n.c].walls[n.ow] = false;
-    cells[n.r][n.c].visited = true;
-    stack.push({r:n.r,c:n.c});
-  }
-  // Add extra walls for difficulty
-  if (difficulty > 0) {
-    for (let i = 0; i < difficulty * 5; i++) {
-      const r = Math.floor(Math.random()*(rows-1));
-      const c = Math.floor(Math.random()*(cols-1));
-      cells[r][c].walls[1] = true;
-      cells[r][c+1].walls[3] = true;
-    }
+    cells[n.r][n.c].visited     = true;
+    stack.push({r:n.r, c:n.c});
   }
   return cells;
 }
 
 function drawMaze() {
   const ctx = mazeCtx;
-  const {maze,cols,rows,offsetX,offsetY,ballX,ballY,endCol,endRow} = mazeData;
+  const {maze,cols,rows,offsetX,offsetY,ballX,ballY,endCol,endRow,cellSize:CS} = mazeData;
   ctx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
 
   // Background
@@ -1360,20 +1367,20 @@ function drawMaze() {
 
   // End cell highlight
   ctx.fillStyle = 'rgba(0,230,118,0.15)';
-  ctx.fillRect(offsetX + endCol*CELL+2, offsetY + endRow*CELL+2, CELL-4, CELL-4);
+  ctx.fillRect(offsetX + endCol*CS+2, offsetY + endRow*CS+2, CS-4, CS-4);
 
   // Walls
   ctx.strokeStyle = '#2a4a6a';
   ctx.lineWidth = 2;
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const x = offsetX + c * CELL, y = offsetY + r * CELL;
+      const x = offsetX + c * CS, y = offsetY + r * CS;
       const cell = maze[r][c];
       ctx.beginPath();
-      if (cell.walls[0]) { ctx.moveTo(x,y); ctx.lineTo(x+CELL,y); } // top
-      if (cell.walls[1]) { ctx.moveTo(x+CELL,y); ctx.lineTo(x+CELL,y+CELL); } // right
-      if (cell.walls[2]) { ctx.moveTo(x+CELL,y+CELL); ctx.lineTo(x,y+CELL); } // bottom
-      if (cell.walls[3]) { ctx.moveTo(x,y+CELL); ctx.lineTo(x,y); } // left
+      if (cell.walls[0]) { ctx.moveTo(x,y); ctx.lineTo(x+CS,y); }
+      if (cell.walls[1]) { ctx.moveTo(x+CS,y); ctx.lineTo(x+CS,y+CS); }
+      if (cell.walls[2]) { ctx.moveTo(x+CS,y+CS); ctx.lineTo(x,y+CS); }
+      if (cell.walls[3]) { ctx.moveTo(x,y+CS); ctx.lineTo(x,y); }
       ctx.stroke();
     }
   }
@@ -1382,11 +1389,11 @@ function drawMaze() {
   ctx.fillStyle = '#00d4ff';
   ctx.font = 'bold 11px Nunito';
   ctx.textAlign = 'center';
-  ctx.fillText('START', offsetX + CELL/2, offsetY - 5);
+  ctx.fillText('START', offsetX + CS/2, offsetY - 5);
 
   // END label
   ctx.fillStyle = '#00e676';
-  ctx.fillText('META', offsetX + endCol*CELL + CELL/2, offsetY + endRow*CELL + CELL/2 + 5);
+  ctx.fillText('META', offsetX + endCol*CS + CS/2, offsetY + endRow*CS + CS/2 + 5);
 
   // Ball
   const grd = ctx.createRadialGradient(ballX, ballY, 2, ballX, ballY, 14);
@@ -1415,13 +1422,13 @@ function drawMaze() {
     ctx.strokeStyle = `rgba(255,80,80,${0.5 + 0.5 * pulse})`;
     ctx.lineWidth = 3 + pulse * 3;
     ctx.beginPath();
-    ctx.arc(mazeData.startX, mazeData.startY, CELL * 0.75, 0, Math.PI * 2);
+    ctx.arc(mazeData.startX, mazeData.startY, mazeData.cellSize * 0.75, 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.fillStyle = `rgba(255,100,100,${0.3 + 0.4 * pulse})`;
     ctx.font = 'bold 12px Nunito, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('↩ wróć tu!', mazeData.startX, mazeData.startY + CELL * 1.3);
+    ctx.fillText('↩ wróć tu!', mazeData.startX, mazeData.startY + mazeData.cellSize * 1.3);
     ctx.lineWidth = 1;
 
     // Schedule next frame to keep pulsing
@@ -1439,22 +1446,21 @@ function onMazeMouse(e) {
   const my = (e.clientY - rect.top)  * scaleY;
   // Ignore if cursor is outside the canvas area
   if (mx < 0 || my < 0 || mx > mazeCanvas.width || my > mazeCanvas.height) return;
-  const {offsetX, offsetY, cols, rows, maze, startX, startY, endCol, endRow} = mazeData;
+  const {offsetX, offsetY, cols, rows, maze, startX, startY, endCol, endRow,
+         cellSize: CS, wallMargin: margin} = mazeData;
 
   // Check wall collision
-  const col = Math.floor((mx - offsetX) / CELL);
-  const row = Math.floor((my - offsetY) / CELL);
-  const ballCol = Math.floor((mazeData.ballX - offsetX) / CELL);
-  const ballRow = Math.floor((mazeData.ballY - offsetY) / CELL);
+  const col = Math.floor((mx - offsetX) / CS);
+  const row = Math.floor((my - offsetY) / CS);
+  const ballCol = Math.floor((mazeData.ballX - offsetX) / CS);
+  const ballRow = Math.floor((mazeData.ballY - offsetY) / CS);
 
   let wallHit = false;
   if (col < 0 || col >= cols || row < 0 || row >= rows) {
     wallHit = true;
   } else {
-    const cellX = offsetX + col * CELL, cellY = offsetY + row * CELL;
-    const margin = 10;
+    const cellX = offsetX + col * CS, cellY = offsetY + row * CS;
     if (col !== ballCol || row !== ballRow) {
-      // Moving to new cell - check wall
       const dc = col - ballCol, dr = row - ballRow;
       if (Math.abs(dc) + Math.abs(dr) === 1) {
         let wallIdx = dc === 1 ? 1 : dc === -1 ? 3 : dr === 1 ? 2 : 0;
@@ -1463,14 +1469,13 @@ function onMazeMouse(e) {
         }
       }
     }
-    // Check proximity to walls within cell
     const localX = mx - cellX, localY = my - cellY;
     if (maze[row] && maze[row][col]) {
       const cell = maze[row][col];
       if (cell.walls[0] && localY < margin) wallHit = true;
-      if (cell.walls[2] && localY > CELL - margin) wallHit = true;
+      if (cell.walls[2] && localY > CS - margin) wallHit = true;
       if (cell.walls[3] && localX < margin) wallHit = true;
-      if (cell.walls[1] && localX > CELL - margin) wallHit = true;
+      if (cell.walls[1] && localX > CS - margin) wallHit = true;
     }
   }
 
@@ -1478,20 +1483,18 @@ function onMazeMouse(e) {
     mazeData.ballX = startX;
     mazeData.ballY = startY;
     mazeData.hitWall = true;
-    mazeData.frozen = true;   // block movement until player returns near start
+    mazeData.frozen = true;
     mazeData.touches++;
     addMiss(mx, my);
     drawMaze();
     return;
   }
 
-  // If frozen after wall hit: only unfreeze when cursor/finger is close to start
   if (mazeData.frozen) {
     const dx = mx - startX, dy = my - startY;
-    if (Math.sqrt(dx*dx + dy*dy) < CELL * 0.8) {
+    if (Math.sqrt(dx*dx + dy*dy) < CS * 0.8) {
       mazeData.frozen = false;
     } else {
-      // Keep ball visible at start while waiting
       drawMaze();
       return;
     }
