@@ -1115,7 +1115,8 @@ function makeTarget(shape, color, size, pos, isGood, levelIdx) {
     if (gameData.time <= 0) return;
     const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
     const cx = r.left - ar.left + r.width/2, cy = r.top - ar.top + r.height/2;
-    if (t.dataset.good === '1') {
+    if (t.dataset.good === '1' && !t._done) {
+      t._done = true;
       const pts = 120 + Math.round(80 * (gameData.time / gameData.maxTime));
       addHit(cx, cy, pts);
       t.classList.add('shrinking');
@@ -1164,7 +1165,7 @@ function spawnPrecisionTargets(levelIdx) {
     // Wylosuj kształt i kolor inny niż wzorzec
     let badShape, badColor;
     do { badShape = PR_SHAPES[Math.floor(Math.random() * PR_SHAPES.length)]; }
-    while (badShape === prTarget.shape && PR_COLORS.length > 1);
+    while (badShape === prTarget.shape);
 
     do { badColor = PR_COLORS[Math.floor(Math.random() * PR_COLORS.length)]; }
     while (badColor.hex === prTarget.color.hex);
@@ -1335,7 +1336,8 @@ function startDrag(cfg, levelIdx) {
     dz.dataset.color = item.color;
     const zoneW = 90, zoneH = 90;
     const x = Math.min(areaW - zoneW - 10, areaW - 120);
-    const y = 40 + i * (zoneH + 20);
+    const dzSpacing = Math.min(zoneH + 20, Math.floor((area.offsetHeight - 80) / pairs));
+    const y = 40 + i * dzSpacing;
     dz.style.cssText = `width:${zoneW}px;height:${zoneH}px;left:${x}px;top:${y}px;border-color:${item.color}44;color:${item.color}44`;
     dz.textContent = item.emoji;
     area.appendChild(dz);
@@ -1347,7 +1349,9 @@ function startDrag(cfg, levelIdx) {
     const di = document.createElement('div');
     di.className = 'drag-item';
     di.dataset.color = item.color;
-    const x = 30 + Math.random() * 150, y = 40 + i * 110;
+    const safeH = Math.max(area.offsetHeight, pairs * 90 + 60);
+    const spacing = Math.min(110, Math.floor((area.offsetHeight - 80) / pairs));
+    const x = 30 + Math.random() * 100, y = 40 + i * spacing;
     di.style.cssText = `left:${x}px;top:${y}px;background:${item.color}22;border-color:${item.color};`;
     di.textContent = item.emoji;
     makeDraggable(di, area);
@@ -1498,7 +1502,8 @@ function startMaze(cfg, levelIdx) {
   document.addEventListener('mousemove', onMazeMouse);
   document.addEventListener('touchmove', onMazeTouchMove, { passive: false });
   drawMaze();
-  gameData.maxTime = 60 + (2 - levelIdx) * 20;
+  const mazeTimes = [100, 75, 55];
+  gameData.maxTime = mazeTimes[levelIdx] || 60;
   gameData.time = gameData.maxTime;
   startTimer();
 }
@@ -1695,6 +1700,7 @@ function onMazeMouse(e) {
     addHit(mx, my, 500);
     document.removeEventListener('mousemove', onMazeMouse);
     document.removeEventListener('touchmove', onMazeTouchMove);
+    mazeData = {};
     setTimeout(endGame, 500);
   }
 
@@ -1856,7 +1862,13 @@ function spawnMixed(levelIdx) {
     });
     area.appendChild(t);
     const _gsMxS = gameSession;
-    setTimeout(() => { if (t.parentNode && gameSession === _gsMxS) { t.remove(); if (gameData.time > 0) spawnMixed(levelIdx); } }, 3500);
+    setTimeout(() => {
+      if (t.parentNode && gameSession === _gsMxS && !mxsDone) {
+        mxsDone = true;
+        t.remove();
+        if (gameData.time > 0) spawnMixed(levelIdx);
+      } else if (t.parentNode) t.remove();
+    }, 3500);
     return;
   }
 
@@ -1873,15 +1885,16 @@ function spawnMixed(levelIdx) {
     `color:#000`, `line-height:${size}px`, `text-align:center`,
   ].join(';');
   t.textContent = '2×';
-  let clicks = 0, ct = null;
+  let clicks = 0, ct = null, mxdDone = false;
   onActivate(t, (e) => {
     e.stopPropagation();
+    if (mxdDone) return;
     const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
     const cx = r.left - ar.left + r.width/2, cy = r.top - ar.top + r.height/2;
     clicks++;
     if (ct) clearTimeout(ct);
     if (clicks >= 2) {
-      clicks = 0;
+      mxdDone = true; clicks = 0;
       addHit(cx, cy, 180);
       t.classList.add('shrinking');
       const _gsMxDH = gameSession;
@@ -1892,7 +1905,13 @@ function spawnMixed(levelIdx) {
   });
   area.appendChild(t);
   const _gsMxD = gameSession;
-  setTimeout(() => { if (t.parentNode && gameSession === _gsMxD) { t.remove(); if (gameData.time > 0) spawnMixed(levelIdx); } }, 3500);
+  setTimeout(() => {
+    if (t.parentNode && gameSession === _gsMxD && !mxdDone) {
+      mxdDone = true;
+      t.remove();
+      if (gameData.time > 0) spawnMixed(levelIdx);
+    } else if (t.parentNode) t.remove();
+  }, 3500);
 }
 // =========================================================
 // END GAME
@@ -1904,6 +1923,7 @@ function endGame() {
   area.querySelectorAll('.target,.drag-item').forEach(e => e.remove());
   document.removeEventListener('mousemove', onMazeMouse);
   document.removeEventListener('touchmove', onMazeTouchMove);
+  mazeData = {};  // zatrzymaj animację rAF labiryntu
   // Wyczyść panel precyzji i jego timer
   if (area.dataset.precTimer) { clearTimeout(parseInt(area.dataset.precTimer)); delete area.dataset.precTimer; }
   const precPanel = document.getElementById('prec-panel');
@@ -1963,6 +1983,7 @@ function goMenu() {
   clearInterval(gameTimer);
   document.removeEventListener('mousemove', onMazeMouse);
   document.removeEventListener('touchmove', onMazeTouchMove);
+  mazeData = {};  // zatrzymaj animację rAF labiryntu
   updateMenuStats();
   showScreen('menu-screen');
 }
