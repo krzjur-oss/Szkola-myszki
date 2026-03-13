@@ -387,7 +387,14 @@
   @keyframes trailFade { to { opacity: 0; transform: translate(-50%,-50%) scale(0); } }
 
 /* ─── Level Select Screen ─────────────────────────────── */
-.level-header { display:flex; align-items:center; gap:16px; width:100%; margin-bottom:8px; flex-shrink:0; }
+#level-screen {
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 30px 20px;
+  background: radial-gradient(ellipse at 20% 20%, #0d2a4a 0%, #0f1923 60%);
+}
+.level-header { display:flex; align-items:center; gap:16px; width:100%; max-width:700px; margin-bottom:8px; flex-shrink:0; }
 .level-game-title { font-family:'Fredoka One',cursive; font-size:clamp(1.2rem,3vw,1.8rem); display:flex; align-items:center; gap:10px; }
 .level-game-desc { color:var(--muted); font-weight:600; font-size:.9rem; margin-bottom:20px; text-align:center; flex-shrink:0; }
 .level-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr)); gap:16px; width:100%; max-width:700px; overflow-y:auto; }
