@@ -1,64 +1,27 @@
-const CACHE_NAME = 'szkola-myszki-v1';
+const CACHE = 'szkola-myszki-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './core/state.js',
-  './core/engine.js',
-  './core/router.js',
-  './core/ui.js',
-  './games/click-basic.js',
-  './games/precision.js',
-  './games/double-click.js',
-  './games/drag.js',
-  './games/maze.js',
-  './games/mixed.js',
   'https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap',
 ];
 
-// Instalacja – zapisz pliki w cache
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS).catch((err) => {
-        // Jeśli czcionki Google nie są dostępne offline – ignoruj błąd
-        console.warn('Cache partial fail (fonts?):', err);
-      });
-    })
-  );
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
   self.skipWaiting();
 });
 
-// Aktywacja – usuń stare cache
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      )
-    )
-  );
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
   self.clients.claim();
 });
 
-// Fetch – najpierw cache, potem sieć (cache-first)
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        // Zapisz nowe zasoby do cache (tylko GET)
-        if (event.request.method === 'GET' && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return response;
-      }).catch(() => {
-        // Offline i brak w cache – zwróć główną stronę
-        return caches.match('./index.html');
-      });
-    })
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request))
   );
 });
