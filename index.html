@@ -323,28 +323,59 @@
 
   /* RESULTS */
   #result-screen {
-    align-items: center;
-    justify-content: center;
+    position: relative; overflow: hidden;
+    align-items: center; justify-content: center;
     min-height: 100vh;
-    background: radial-gradient(ellipse at center, #0d2a4a 0%, #0f1923 70%);
-    padding: 30px;
+    background: radial-gradient(ellipse at 50% 30%, #0d2a4a 0%, #0f1923 70%);
+  }
+  #fireworks-canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
   }
   .result-card {
-    background: var(--card);
-    border: 2px solid var(--border);
+    position: relative; z-index: 1;
+    background: rgba(26,38,53,0.96);
+    border: 2px solid rgba(0,212,255,0.3);
     border-radius: 24px;
-    padding: 40px;
-    text-align: center;
-    max-width: 420px;
-    width: 100%;
+    padding: 36px 32px 28px;
+    max-width: 480px; width: 90%;
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+    box-shadow: 0 0 60px rgba(0,212,255,0.15), 0 20px 60px rgba(0,0,0,0.5);
+    animation: cardPop .5s cubic-bezier(.34,1.56,.64,1) both;
   }
-  .result-emoji { font-size: 5rem; margin-bottom: 16px; }
-  .result-title { font-family: 'Fredoka One', cursive; font-size: 2.2rem; color: var(--accent); margin-bottom: 8px; }
-  .result-sub { color: var(--muted); font-weight: 600; margin-bottom: 24px; }
-  .result-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
-  .result-stat { background: var(--panel); border-radius: 12px; padding: 14px; }
-  .result-stat-val { font-family: 'Fredoka One', cursive; font-size: 1.8rem; }
-  .result-stat-lbl { font-size: 0.72rem; color: var(--muted); font-weight: 800; text-transform: uppercase; }
+  @keyframes cardPop {
+    from { transform: scale(.7) translateY(40px); opacity: 0; }
+    to   { transform: scale(1) translateY(0);      opacity: 1; }
+  }
+  .result-emoji  { font-size: 4.5rem; margin-bottom: 8px; animation: emojiBounce .6s .3s cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes emojiBounce { from { transform: scale(0) rotate(-20deg); } to { transform: scale(1) rotate(0); } }
+  .result-stars  { font-size: 2.2rem; letter-spacing: 6px; margin-bottom: 10px; }
+  .result-title  { font-family:'Fredoka One',cursive; font-size:2rem; color:var(--accent); margin-bottom:4px; }
+  .result-sub    { color:var(--muted); font-weight:600; font-size:.9rem; margin-bottom:20px; }
+  .result-stats  {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; width: 100%; margin-bottom: 20px;
+  }
+  .result-stat   { background:var(--panel); border-radius:14px; padding:14px 10px; text-align:center; }
+  .result-stat-val { font-family:'Fredoka One',cursive; font-size:1.8rem; }
+  .result-stat-lbl { font-size:.68rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+  .result-time-row {
+    width:100%; display:flex; align-items:center; justify-content:center;
+    gap:8px; font-size:.9rem; color:var(--muted); font-weight:700;
+    margin-bottom:22px; padding:10px 16px; background:var(--panel); border-radius:12px;
+  }
+  .result-time-val { font-family:'Fredoka One',cursive; font-size:1.4rem; color:var(--accent); }
+  .result-btns   { display:flex; flex-direction:column; gap:10px; width:100%; }
+  .btn-next-big  {
+    width:100%; padding:16px; font-size:1.1rem; font-family:'Fredoka One',cursive;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    color:#000; border:none; border-radius:14px; cursor:pointer;
+    transition:all .15s; box-shadow: 0 4px 20px rgba(0,212,255,0.3);
+  }
+  .btn-next-big:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,212,255,0.4); }
+  .result-btns-row { display:flex; gap:8px; width:100%; }
+  .result-btns-row .btn { flex:1; padding:11px 8px; font-size:.85rem; }
+
   .stars { font-size: 2rem; margin-bottom: 16px; letter-spacing: 4px; }
   .btn { padding: 12px 28px; border-radius: 12px; border: none; font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800; cursor: pointer; transition: all 0.15s; }
   .btn-primary { background: var(--accent); color: #000; }
@@ -592,9 +623,10 @@
 
 <!-- RESULT -->
 <div class="screen" id="result-screen">
+  <canvas id="fireworks-canvas"></canvas>
   <div class="result-card">
     <div class="result-emoji" id="res-emoji">🎉</div>
-    <div class="stars" id="res-stars">⭐⭐⭐</div>
+    <div class="result-stars" id="res-stars">⭐⭐⭐</div>
     <div class="result-title" id="res-title">Świetnie!</div>
     <div class="result-sub" id="res-sub">Ukończyłeś ćwiczenie</div>
     <div class="result-stats">
@@ -615,11 +647,18 @@
         <div class="result-stat-lbl">Pudła</div>
       </div>
     </div>
-    <button class="btn btn-primary" id="btn-next" onclick="nextLevel()">Następny poziom ▶</button>
-    <button class="btn btn-secondary" onclick="retryGame()">🔄 Powtórz</button>
-    <button class="btn btn-secondary" onclick="navigate('level/'+currentType)">☰ Poziomy</button>
-    <br><br>
-    <button class="btn btn-secondary" onclick="navigate('menu')">🏠 Menu</button>
+    <div class="result-time-row" id="res-time-row">
+      <span>⏱ Czas gry:</span>
+      <span class="result-time-val" id="r-time">—</span>
+    </div>
+    <div class="result-btns">
+      <button class="btn-next-big" id="btn-next" onclick="nextLevel()">Następny poziom ▶</button>
+      <div class="result-btns-row">
+        <button class="btn btn-secondary" onclick="retryGame()">🔄 Powtórz</button>
+        <button class="btn btn-secondary" onclick="navigate('level/'+currentType)">☰ Poziomy</button>
+        <button class="btn btn-secondary" onclick="navigate('menu')">🏠 Menu</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1947,9 +1986,38 @@ function endGame() {
   document.getElementById('r-hits').textContent = gameData.hits;
   document.getElementById('r-miss').textContent = gameData.miss;
 
+  // Czas gry
+  const elapsed = Math.round(gameData.maxTime - Math.max(gameData.time, 0));
+  const timeRow = document.getElementById('res-time-row');
+  const timeEl  = document.getElementById('r-time');
+  if (currentType === 'maze') {
+    // Labirynt: liczymy jak długo gracz grał
+    timeEl.textContent = elapsed + ' s';
+    timeRow.style.display = 'flex';
+  } else if (currentType === 'drag') {
+    timeEl.textContent = elapsed + ' s';
+    timeRow.style.display = 'flex';
+  } else {
+    // Gry punktowe – pokaż punkty zamiast czasu (już w statach), ukryj wiersz czasu
+    timeRow.style.display = 'none';
+  }
+
   // Next level btn
   const hasNext = currentLevel < 2;
-  document.getElementById('btn-next').style.display = hasNext ? 'inline-block' : 'none';
+  const btnNext = document.getElementById('btn-next');
+  if (hasNext) {
+    btnNext.style.display = 'block';
+    const nextName = ['Łatwy','Średni','Trudny'][currentLevel + 1];
+    btnNext.textContent = 'Następny poziom – ' + nextName + ' ▶';
+  } else {
+    btnNext.style.display = 'block';
+    btnNext.textContent = '🏆 Wszystkie poziomy ukończone!';
+    btnNext.onclick = () => navigate('level/' + currentType);
+    btnNext.style.background = 'linear-gradient(135deg, var(--yellow), var(--orange))';
+  }
+
+  // Gwiazdki animowane
+  animateStars(stars);
 
   // Save stats
   state.totalScore += gameData.score;
@@ -1961,13 +2029,145 @@ function endGame() {
   saveState();
 
   showScreen('result-screen');
+  startFireworks(stars);
 }
 
 function nextLevel() {
+  stopFireworks();
   if (currentLevel < 2) startGame(currentType, currentLevel + 1);
 }
 
+// =========================================================
+// GWIAZDKI – animacja sekwencyjna
+// =========================================================
+function animateStars(count) {
+  const el = document.getElementById('res-stars');
+  el.textContent = '☆☆☆';
+  el.style.transition = 'none';
+  const filled = '⭐', empty = '☆';
+  let i = 0;
+  function showNext() {
+    if (i >= count) return;
+    i++;
+    el.textContent = filled.repeat(i) + empty.repeat(3 - i);
+    el.style.transform = 'scale(1.3)';
+    setTimeout(() => { el.style.transform = 'scale(1)'; el.style.transition = 'transform .15s'; }, 150);
+    if (i < count) setTimeout(showNext, 350);
+  }
+  if (count > 0) setTimeout(showNext, 500);
+}
+
+// =========================================================
+// FAJERWERKI – canvas
+// =========================================================
+let _fwRaf = null;
+let _fwCtx  = null;
+let _fwParticles = [];
+
+function startFireworks(stars) {
+  const canvas = document.getElementById('fireworks-canvas');
+  if (!canvas) return;
+  // Dopasuj canvas do rozmiaru ekranu
+  canvas.width  = canvas.offsetWidth  || window.innerWidth;
+  canvas.height = canvas.offsetHeight || window.innerHeight;
+  _fwCtx = canvas.getContext('2d');
+  _fwParticles = [];
+
+  // Ile fajerwerków zależy od gwiazdek
+  const intensity = [1, 2, 3][stars - 1] || 1;
+  let launched = 0;
+  const maxLaunches = stars === 3 ? 12 : stars === 2 ? 7 : 4;
+
+  function launchRocket() {
+    if (launched >= maxLaunches) return;
+    launched++;
+    const x = 60 + Math.random() * (canvas.width - 120);
+    const y = canvas.height * (0.2 + Math.random() * 0.5);
+    explode(x, y, stars);
+    if (launched < maxLaunches) {
+      setTimeout(launchRocket, 300 + Math.random() * 500);
+    }
+  }
+
+  launchRocket();
+  _fwRaf = requestAnimationFrame(drawFireworks);
+}
+
+function stopFireworks() {
+  if (_fwRaf) { cancelAnimationFrame(_fwRaf); _fwRaf = null; }
+  _fwParticles = [];
+  const canvas = document.getElementById('fireworks-canvas');
+  if (canvas && _fwCtx) _fwCtx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function explode(x, y, stars) {
+  const palettes = [
+    ['#ff4081','#ff6d00','#ffd740'],          // 1 gwiazdka – ciepłe
+    ['#00e676','#00d4ff','#ffd740','#ff4081'], // 2 gwiazdki
+    ['#ffd740','#00d4ff','#ab47bc','#00e676','#ff4081','#ff6d00'], // 3 gwiazdki
+  ];
+  const palette = palettes[Math.min(stars - 1, 2)];
+  const count = 28 + stars * 10;
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.3;
+    const speed = 2.5 + Math.random() * 4 * stars;
+    _fwParticles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1,
+      color: palette[Math.floor(Math.random() * palette.length)],
+      life: 1.0,
+      decay: 0.012 + Math.random() * 0.018,
+      size: 3 + Math.random() * 3,
+      trail: [],
+    });
+  }
+}
+
+function drawFireworks() {
+  const canvas = document.getElementById('fireworks-canvas');
+  if (!canvas || !_fwCtx) return;
+  _fwCtx.fillStyle = 'rgba(15,25,35,0.18)';
+  _fwCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+  _fwParticles = _fwParticles.filter(p => p.life > 0);
+  for (const p of _fwParticles) {
+    p.trail.push({x: p.x, y: p.y});
+    if (p.trail.length > 5) p.trail.shift();
+
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.12;   // grawitacja
+    p.vx *= 0.97;
+    p.vy *= 0.97;
+    p.life -= p.decay;
+
+    // Ogon
+    if (p.trail.length > 1) {
+      _fwCtx.beginPath();
+      _fwCtx.moveTo(p.trail[0].x, p.trail[0].y);
+      for (const pt of p.trail) _fwCtx.lineTo(pt.x, pt.y);
+      _fwCtx.strokeStyle = p.color + Math.round(p.life * 80).toString(16).padStart(2,'0');
+      _fwCtx.lineWidth = p.size * 0.5;
+      _fwCtx.stroke();
+    }
+
+    // Punkt
+    _fwCtx.beginPath();
+    _fwCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    _fwCtx.fillStyle = p.color + Math.round(p.life * 255).toString(16).padStart(2,'0');
+    _fwCtx.fill();
+  }
+
+  if (_fwParticles.length > 0) {
+    _fwRaf = requestAnimationFrame(drawFireworks);
+  } else {
+    _fwRaf = null;
+  }
+}
+
 function retryGame() {
+  stopFireworks();
   startGame(currentType, currentLevel);
 }
 
@@ -1975,11 +2175,13 @@ function retryGame() {
 // NAVIGATION
 // =========================================================
 function showScreen(id) {
+  if (id !== 'result-screen') stopFireworks();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
 function goMenu() {
+  stopFireworks();
   clearInterval(gameTimer);
   document.removeEventListener('mousemove', onMazeMouse);
   document.removeEventListener('touchmove', onMazeTouchMove);
