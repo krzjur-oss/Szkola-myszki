@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Szkoła Myszki 🖱️</title>
+<meta name="description" content="Nauka obsługi myszy i touchpada – ćwiczenia dla uczniów">
+<meta name="theme-color" content="#0f1923">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Szkoła Myszki">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
 
@@ -749,7 +756,7 @@ function closeTutorial() {
 // =========================================================
 // GAME ENGINE
 // =========================================================
-let currentGame = null, gameTimer = null, gameData = {};
+let currentGame = null, gameTimer = null, gameData = {}, gameSession = 0;
 
 const GAME_CONFIGS = {
   click_basic:    { time: 30, targets: 20, minSize: 40, maxSize: 80, title: 'Kliknij cel!', levels: [
@@ -798,6 +805,7 @@ function startGame(type, level = 0) {
 }
 
 function _startGame(type, level) {
+  gameSession++;  // unieważnia wszystkie timery z poprzedniej gry
   const cfg = GAME_CONFIGS[type];
   const lvl = cfg.levels[level];
 
@@ -809,12 +817,12 @@ function _startGame(type, level) {
   showScreen('game-screen');
   clearGameArea();
 
-  if (type === 'click_basic')     startClickBasic(lvl);
-  else if (type === 'click_precision') startClickPrecision(lvl, level);
-  else if (type === 'double_click')    startDoubleClick(lvl);
-  else if (type === 'drag')           startDrag(lvl, level);
-  else if (type === 'maze')           startMaze(lvl, level);
-  else if (type === 'mixed')          startMixed(lvl, level);
+  if (type === 'click_basic')          startClickBasic(CLICK_BASIC_CFGS[level]);
+  else if (type === 'click_precision')  startClickPrecision(PRECISION_CFGS[level], level);
+  else if (type === 'double_click')     startDoubleClick(DOUBLE_CFGS[level]);
+  else if (type === 'drag')            startDrag(lvl, level);
+  else if (type === 'maze')            startMaze(lvl, level);
+  else if (type === 'mixed')           startMixed(lvl, level);
 }
 
 function clearGameArea() {
@@ -910,6 +918,19 @@ function randomPos(size, area) {
 // CLICK BASIC
 // =========================================================
 let spawnTimeout = null;
+// =========================================================
+// JEDNYM KLIKNIĘCIEM
+// Łatwy:  duże cele, dużo czasu
+// Średni: mniejsze, szybciej znikają
+// Trudny: małe, bardzo szybko znikają
+// =========================================================
+
+const CLICK_BASIC_CFGS = [
+  { minSize:65, maxSize:95, lifetime:2200, time:40 },  // Łatwy
+  { minSize:42, maxSize:68, lifetime:1400, time:30 },  // Średni
+  { minSize:28, maxSize:48, lifetime:900,  time:25 },  // Trudny
+];
+
 function startClickBasic(cfg) {
   const area = document.getElementById('game-area');
   area.addEventListener('click', onAreaMiss);
@@ -918,7 +939,7 @@ function startClickBasic(cfg) {
     if (e.target === area) {
       e.preventDefault();
       const p = eventPos(e, area);
-      if (!isNaN(p.x) && !isNaN(p.y)) addMiss(p.x, p.y);
+      if (!isNaN(p.x)) addMiss(p.x, p.y);
     }
   }, { passive: false });
   spawnTarget_basic(cfg);
@@ -928,35 +949,49 @@ function startClickBasic(cfg) {
 function spawnTarget_basic(cfg) {
   if (gameData.time <= 0) return;
   const area = document.getElementById('game-area');
-  const size = cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize);
   const rect = area.getBoundingClientRect();
-  const pos = randomPos(size, rect);
+  const size = cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize);
+  const pos  = randomPos(size, rect);
   const colors = ['#00d4ff','#00e676','#ffd740','#ff4081','#d500f9','#ff6d00'];
-  const col = colors[Math.floor(Math.random() * colors.length)];
+  const col  = colors[Math.floor(Math.random() * colors.length)];
+  const icons = ['🎯','⭐','💎','🔵','🟠','🟣'];
+
   const t = document.createElement('div');
   t.className = 'target';
-  t.style.cssText = `width:${size}px;height:${size}px;left:${pos.x - size/2}px;top:${pos.y - size/2}px;background:${col};box-shadow:0 0 20px ${col}55`;
-  t.textContent = ['🎯','⭐','💎','🔵'][Math.floor(Math.random()*4)];
+  t.style.cssText = [
+    `width:${size}px`, `height:${size}px`,
+    `left:${pos.x - size/2}px`, `top:${pos.y - size/2}px`,
+    `background:${col}`, `box-shadow:0 0 20px ${col}55`,
+    `font-size:${size * 0.45}px`, `line-height:${size}px`, `text-align:center`
+  ].join(';');
+  t.textContent = icons[Math.floor(Math.random() * icons.length)];
+
+  let cbDone = false;
   onActivate(t, (e) => {
     e.stopPropagation();
+    if (gameData.time <= 0 || cbDone) return;
+    cbDone = true;
     const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
-    const pts = Math.round(100 * (size / 80) + (gameData.time / gameData.maxTime) * 50);
-    addHit(r.left - ar.left + r.width/2, r.top - ar.top + r.height/2, pts);
+    const cx = r.left - ar.left + r.width/2, cy = r.top - ar.top + r.height/2;
+    const pts = Math.round(80 * (80 / Math.max(size, 20)) + (gameData.time / gameData.maxTime) * 60);
+    addHit(cx, cy, Math.max(30, Math.min(pts, 250)));
     t.classList.add('shrinking');
     setTimeout(() => { t.remove(); if (gameData.time > 0) spawnTarget_basic(cfg); }, 150);
   });
+
   area.appendChild(t);
-  const lifetime = 1200 + size * 15;
+
+  // Znikanie po czasie – pudło
+  const _gscb = gameSession;
   setTimeout(() => {
-    if (t.parentNode && gameData.time > 0) {
+    if (t.parentNode && gameSession === _gscb && gameData.time > 0 && !cbDone) {
+      cbDone = true;
       const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
       addMiss(r.left - ar.left + r.width/2, r.top - ar.top + r.height/2);
       t.remove();
       spawnTarget_basic(cfg);
-    } else if (t.parentNode) {
-      t.remove();
-    }
-  }, lifetime);
+    } else if (t.parentNode) t.remove();
+  }, cfg.lifetime);
 }
 
 function onAreaMiss(e) {
@@ -964,90 +999,130 @@ function onAreaMiss(e) {
   if (e.target === document.getElementById('game-area')) {
     const x = e.offsetX ?? e.clientX - e.target.getBoundingClientRect().left;
     const y = e.offsetY ?? e.clientY - e.target.getBoundingClientRect().top;
-    if (!isNaN(x) && !isNaN(y)) addMiss(x, y);
+    if (!isNaN(x)) addMiss(x, y);
   }
 }
 
 // =========================================================
-// CLICK PRECISION
+// PRECYZJA
+// Wyświetlacz z lewej: duża ikona figury + kolor = "wzorzec do kliknięcia"
+// Łatwy:  1 figura jednego koloru do kliknięcia + 3 złe
+// Średni: 1 figura + 4 złe (różne kształty i kolory)
+// Trudny: 1 figura + 5 złych, szybka rotacja
 // =========================================================
 
-// Per-level config: what is "good" and what are the distractors
-const PRECISION_LEVELS = [
-  {
-    instruction: 'Kliknij TYLKO ★ gwiazdki! Ignoruj koła i kwadraty.',
-    goodShape: 'star',
-    goodColor: null,
-    badShapes: ['round', 'square', 'triangle'],
-    badColors: ['#00d4ff','#ffd740','#ff4081','#d500f9'],
-    goodCount: 1,
-    badCount: 3,
-  },
-  {
-    instruction: 'Kliknij TYLKO 🟢 zielone kształty! Ignoruj inne kolory.',
-    goodShape: null,
-    goodColor: '#00e676',
-    badShapes: ['round', 'star', 'square'],
-    badColors: ['#00d4ff','#ffd740','#ff4081','#d500f9'],
-    goodCount: 1,
-    badCount: 4,
-  },
-  {
-    instruction: 'Kliknij TYLKO ⭕ niebieskie koła! Reszta to pułapki.',
-    goodShape: 'round',
-    goodColor: '#00d4ff',
-    badShapes: ['star', 'square', 'triangle'],
-    badColors: ['#00e676','#ffd740','#ff4081','#d500f9'],
-    goodCount: 1,
-    badCount: 5,
-  },
+// Wszystkie możliwe kombinacje kształt+kolor
+const PR_SHAPES = ['round','square','triangle','star'];
+const PR_COLORS = [
+  { name:'czerwona',   hex:'#ef5350' },
+  { name:'niebieska',  hex:'#42a5f5' },
+  { name:'zielona',    hex:'#66bb6a' },
+  { name:'żółta',      hex:'#ffca28' },
+  { name:'fioletowa',  hex:'#ab47bc' },
+  { name:'pomarańcz.', hex:'#ff7043' },
+];
+const PR_LABELS = { round:'●', square:'■', triangle:'▲', star:'★' };
+const PR_NAMES  = { round:'koło', square:'kwadrat', triangle:'trójkąt', star:'gwiazdka' };
+
+// Aktualny cel precyzji – losowany na każdą rundę
+let prTarget = null;
+
+const PRECISION_CFGS = [
+  { badCount: 3, lifetime: 0  },  // Łatwy  – cele zostają do kliknięcia
+  { badCount: 4, lifetime: 4000 }, // Średni – rotacja co 4s
+  { badCount: 5, lifetime: 2500 }, // Trudny – rotacja co 2.5s
 ];
 
 function startClickPrecision(cfg, levelIdx) {
+  // Zbuduj panel wzorca po lewej stronie
+  _buildPrecisionPanel();
+  // Ukryj domyślną instrukcję (korzystamy z panelu)
+  const instr = document.getElementById('g-instruction');
+  if (instr) instr.style.display = 'none';
+
   const area = document.getElementById('game-area');
   area.addEventListener('click', (e) => {
     if (gameData.time <= 0) return;
     if (e.target === area) {
       const x = e.offsetX ?? e.clientX - area.getBoundingClientRect().left;
       const y = e.offsetY ?? e.clientY - area.getBoundingClientRect().top;
-      if (!isNaN(x) && !isNaN(y)) addMiss(x, y);
+      if (!isNaN(x)) addMiss(x, y);
     }
   });
+
+  _pickPrecisionTarget();
   spawnPrecisionTargets(levelIdx);
   startTimer();
+}
+
+function _buildPrecisionPanel() {
+  const area = document.getElementById('game-area');
+  // Usuń stary panel jeśli istnieje
+  const old = document.getElementById('prec-panel');
+  if (old) old.remove();
+
+  const panel = document.createElement('div');
+  panel.id = 'prec-panel';
+  panel.style.cssText = [
+    'position:absolute', 'left:8px', 'top:50%', 'transform:translateY(-50%)',
+    'background:rgba(15,25,35,0.92)', 'border:2px solid var(--accent)',
+    'border-radius:14px', 'padding:14px 10px', 'z-index:10',
+    'display:flex', 'flex-direction:column', 'align-items:center', 'gap:8px',
+    'min-width:72px', 'box-shadow:0 0 20px rgba(0,212,255,0.2)'
+  ].join(';');
+  panel.innerHTML = `
+    <div style="font-size:.6rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;text-align:center">Kliknij<br>to:</div>
+    <div id="prec-icon" style="font-size:2.4rem;line-height:1"></div>
+    <div id="prec-name" style="font-size:.65rem;font-weight:800;color:var(--text);text-align:center;line-height:1.3"></div>
+  `;
+  area.appendChild(panel);
+}
+
+function _pickPrecisionTarget() {
+  const shape = PR_SHAPES[Math.floor(Math.random() * PR_SHAPES.length)];
+  const color = PR_COLORS[Math.floor(Math.random() * PR_COLORS.length)];
+  prTarget = { shape, color };
+  _updatePrecisionPanel();
+}
+
+function _updatePrecisionPanel() {
+  if (!prTarget) return;
+  const icon = document.getElementById('prec-icon');
+  const name = document.getElementById('prec-name');
+  if (!icon || !name) return;
+  icon.textContent = PR_LABELS[prTarget.shape];
+  icon.style.color = prTarget.color.hex;
+  icon.style.textShadow = `0 0 12px ${prTarget.color.hex}`;
+  name.innerHTML = `<span style="color:${prTarget.color.hex}">${prTarget.color.name}</span><br>${PR_NAMES[prTarget.shape]}`;
 }
 
 function makeTarget(shape, color, size, pos, isGood, levelIdx) {
   const area = document.getElementById('game-area');
   const t = document.createElement('div');
-  const shapeClass = shape !== 'round' ? 'target-' + shape : '';
-  t.className = 'target ' + shapeClass;
+  t.className = 'target ' + (shape !== 'round' ? 'target-' + shape : '');
   t.dataset.good = isGood ? '1' : '0';
-
-  // Label inside target so the shape is obvious
-  const labels = { star: '★', square: '■', triangle: '▲', round: '●' };
-  t.textContent = labels[shape] || '';
-  t.style.cssText = `
-    width:${size}px; height:${size}px;
-    left:${pos.x - size/2}px; top:${pos.y - size/2}px;
-    background:${color};
-    box-shadow: 0 0 15px ${color}88;
-    font-size:${size * 0.45}px;
-    color: rgba(0,0,0,0.5);
-    line-height:${size}px;
-    text-align:center;
-  `;
+  t.textContent = PR_LABELS[shape] || '';
+  t.style.cssText = [
+    `width:${size}px`, `height:${size}px`,
+    `left:${pos.x - size/2}px`, `top:${pos.y - size/2}px`,
+    `background:${color}`, `box-shadow:0 0 15px ${color}88`,
+    `font-size:${size * 0.45}px`, `color:rgba(0,0,0,0.45)`,
+    `line-height:${size}px`, `text-align:center`
+  ].join(';');
 
   onActivate(t, (e) => {
     e.stopPropagation();
+    if (gameData.time <= 0) return;
     const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
     const cx = r.left - ar.left + r.width/2, cy = r.top - ar.top + r.height/2;
     if (t.dataset.good === '1') {
-      addHit(cx, cy, 150);
+      const pts = 120 + Math.round(80 * (gameData.time / gameData.maxTime));
+      addHit(cx, cy, pts);
       t.classList.add('shrinking');
+      const _gs = gameSession;
       setTimeout(() => {
         t.remove();
-        if (gameData.time > 0) spawnPrecisionTargets(levelIdx);
+        if (gameSession === _gs && gameData.time > 0) { _pickPrecisionTarget(); spawnPrecisionTargets(levelIdx); }
       }, 150);
     } else {
       addMiss(cx, cy);
@@ -1064,50 +1139,76 @@ function spawnPrecisionTargets(levelIdx) {
   const area = document.getElementById('game-area');
   [...area.querySelectorAll('.target')].forEach(t => t.remove());
 
-  const lvl = PRECISION_LEVELS[levelIdx] || PRECISION_LEVELS[0];
-  document.getElementById('g-instruction').textContent = lvl.instruction;
-
+  if (!prTarget) _pickPrecisionTarget();
+  const cfg  = PRECISION_CFGS[levelIdx] || PRECISION_CFGS[0];
   const rect = area.getBoundingClientRect();
-  const allTargets = [];
+  const targets = [];
 
-  // Spawn GOOD targets
-  for (let i = 0; i < lvl.goodCount; i++) {
-    const size = 55 + Math.random() * 25;
-    const pos = randomPos(size, rect);
-    const shape = lvl.goodShape || lvl.badShapes[Math.floor(Math.random() * lvl.badShapes.length)];
-    const color = lvl.goodColor || '#00e676';
-    allTargets.push(makeTarget(shape, color, size, pos, true, levelIdx));
+  // Panel zajmuje lewą stronę – ogranicz area cele do prawej strefy
+  const panelW = 90;
+  const safeRect = { width: rect.width - panelW, height: rect.height };
+  const safeOffset = panelW;
+
+  // Dobry cel
+  const goodSize = 58 + Math.random() * 22;
+  const gp = randomPos(goodSize, safeRect);
+  gp.x += safeOffset;
+  targets.push(makeTarget(prTarget.shape, prTarget.color.hex, goodSize, gp, true, levelIdx));
+
+  // Złe cele – różne od wzorca
+  for (let i = 0; i < cfg.badCount; i++) {
+    const size = 50 + Math.random() * 28;
+    const pos  = randomPos(size, safeRect);
+    pos.x += safeOffset;
+
+    // Wylosuj kształt i kolor inny niż wzorzec
+    let badShape, badColor;
+    do { badShape = PR_SHAPES[Math.floor(Math.random() * PR_SHAPES.length)]; }
+    while (badShape === prTarget.shape && PR_COLORS.length > 1);
+
+    do { badColor = PR_COLORS[Math.floor(Math.random() * PR_COLORS.length)]; }
+    while (badColor.hex === prTarget.color.hex);
+
+    // Na poziomie łatwym – tylko kolor decyduje (same kształty co dobry)
+    const finalShape = levelIdx === 0 ? prTarget.shape : badShape;
+    targets.push(makeTarget(finalShape, badColor.hex, size, pos, false, levelIdx));
   }
 
-  // Spawn BAD targets (distractors)
-  for (let i = 0; i < lvl.badCount; i++) {
-    const size = 50 + Math.random() * 30;
-    const pos = randomPos(size, rect);
-    // Bad shape: if we're testing shape, use a bad shape; otherwise random
-    const shape = lvl.goodShape
-      ? lvl.badShapes[Math.floor(Math.random() * lvl.badShapes.length)]
-      : lvl.badShapes[Math.floor(Math.random() * lvl.badShapes.length)];
-    // Bad color: never the good color
-    const color = lvl.badColors[Math.floor(Math.random() * lvl.badColors.length)];
-    allTargets.push(makeTarget(shape, color, size, pos, false, levelIdx));
-  }
+  targets.sort(() => Math.random() - 0.5);
+  targets.forEach(t => area.appendChild(t));
 
-  // Shuffle and add to area
-  allTargets.sort(() => Math.random() - 0.5);
-  allTargets.forEach(t => area.appendChild(t));
+  // Rotacja celów na średnim i trudnym
+  if (cfg.lifetime > 0) {
+    const mySession = gameSession;
+    setTimeout(() => {
+      if (gameSession === mySession && gameData.time > 0) {
+        _pickPrecisionTarget(); spawnPrecisionTargets(levelIdx);
+      }
+    }, cfg.lifetime);
+  }
 }
 
 // =========================================================
-// DOUBLE CLICK
+// PODWÓJNE KLIKNIĘCIE
+// Łatwy:  tylko cele 2×
+// Średni: cele 2× + cele 1× (kliknij oba odpowiednio)
+// Trudny: cele 2× + cele 1×, szybsze, mniejsze
 // =========================================================
+
+const DOUBLE_CFGS = [
+  { minSize:70, maxSize:92, mix:false, ratio:1.0, lifetime:3500, time:40 },
+  { minSize:52, maxSize:74, mix:true,  ratio:0.6, lifetime:2800, time:35 },
+  { minSize:38, maxSize:58, mix:true,  ratio:0.5, lifetime:2000, time:28 },
+];
+
 function startDoubleClick(cfg) {
-  document.getElementById('game-area').addEventListener('click', (e) => {
+  const area = document.getElementById('game-area');
+  area.addEventListener('click', (e) => {
     if (gameData.time <= 0) return;
-    const area = document.getElementById('game-area');
     if (e.target === area) {
       const x = e.offsetX ?? e.clientX - area.getBoundingClientRect().left;
       const y = e.offsetY ?? e.clientY - area.getBoundingClientRect().top;
-      if (!isNaN(x) && !isNaN(y)) addMiss(x, y);
+      if (!isNaN(x)) addMiss(x, y);
     }
   });
   spawnDoubleTarget(cfg);
@@ -1118,40 +1219,93 @@ function spawnDoubleTarget(cfg) {
   if (gameData.time <= 0) return;
   const area = document.getElementById('game-area');
   [...area.querySelectorAll('.target')].forEach(t => t.remove());
+
+  // Zdecyduj czy ten cel to 2× czy 1×
+  const isDouble = !cfg.mix || Math.random() < cfg.ratio;
   const size = cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize);
   const rect = area.getBoundingClientRect();
-  const pos = randomPos(size, rect);
+  const pos  = randomPos(size, rect);
+
   const t = document.createElement('div');
   t.className = 'target';
-  t.style.cssText = `width:${size}px;height:${size}px;left:${pos.x-size/2}px;top:${pos.y-size/2}px;background:#5c6bc0;border:3px solid #7986cb;box-shadow:0 0 25px #5c6bc055;font-size:${size*0.4}px`;
-  t.textContent = '2×';
-  t.style.fontSize = (size * 0.35) + 'px';
-  t.style.fontFamily = 'Fredoka One, cursive';
-  t.style.color = '#fff';
-  let clicks = 0, clickTimeout = null;
-  const handleDoubleActivate = (e) => {
-    e.stopPropagation();
-    clicks++;
-    if (clickTimeout) clearTimeout(clickTimeout);
-    if (clicks >= 2) {
-      clicks = 0;
-      const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
-      addHit(r.left-ar.left+r.width/2, r.top-ar.top+r.height/2, 180);
-      t.classList.add('shrinking');
-      setTimeout(() => { t.remove(); if (gameData.time > 0) spawnDoubleTarget(cfg); }, 150);
-    } else {
-      clickTimeout = setTimeout(() => {
+
+  if (isDouble) {
+    t.style.cssText = [
+      `width:${size}px`, `height:${size}px`,
+      `left:${pos.x - size/2}px`, `top:${pos.y - size/2}px`,
+      `background:#5c6bc0`, `border:3px solid #9fa8da`,
+      `box-shadow:0 0 25px #5c6bc055`,
+      `font-size:${size * 0.32}px`, `font-family:'Fredoka One',cursive`,
+      `color:#fff`, `line-height:${size}px`, `text-align:center`
+    ].join(';');
+    t.textContent = '2×';
+
+    let clicks = 0, clickTimeout = null, dcDone = false;
+    onActivate(t, (e) => {
+      e.stopPropagation();
+      if (gameData.time <= 0 || dcDone) return;
+      clicks++;
+      if (clickTimeout) clearTimeout(clickTimeout);
+      if (clicks >= 2) {
+        dcDone = true; t._done = true; clicks = 0;
         const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
-        if (ar.width) addMiss(r.left-ar.left+r.width/2, r.top-ar.top+r.height/2);
-        clicks = 0;
-      }, 500);
-    }
-  };
-  onActivate(t, handleDoubleActivate);
+        const pts = 150 + Math.round(80 * (gameData.time / gameData.maxTime));
+        addHit(r.left-ar.left+r.width/2, r.top-ar.top+r.height/2, pts);
+        t.classList.add('shrinking');
+        const _gs1 = gameSession;
+        setTimeout(() => { t.remove(); if (gameSession === _gs1 && gameData.time > 0) spawnDoubleTarget(cfg); }, 150);
+      } else {
+        clickTimeout = setTimeout(() => {
+          const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
+          if (ar.width) addMiss(r.left-ar.left+r.width/2, r.top-ar.top+r.height/2);
+          clicks = 0;
+        }, 500);
+      }
+    });
+  } else {
+    // Cel jedynkowy (1×) – inny wygląd żeby odróżnić
+    const colors = ['#00e676','#ffd740','#ff4081','#ff7043'];
+    const col = colors[Math.floor(Math.random() * colors.length)];
+    t.style.cssText = [
+      `width:${size}px`, `height:${size}px`,
+      `left:${pos.x - size/2}px`, `top:${pos.y - size/2}px`,
+      `background:${col}`, `border:3px solid rgba(255,255,255,0.3)`,
+      `box-shadow:0 0 20px ${col}55`,
+      `font-size:${size * 0.32}px`, `font-family:'Fredoka One',cursive`,
+      `color:#000`, `line-height:${size}px`, `text-align:center`
+    ].join(';');
+    t.textContent = '1×';
+
+    let scDone = false;
+    onActivate(t, (e) => {
+      e.stopPropagation();
+      if (gameData.time <= 0 || scDone) return;
+      scDone = true; t._done = true;
+      const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
+      const pts = 100 + Math.round(60 * (gameData.time / gameData.maxTime));
+      addHit(r.left-ar.left+r.width/2, r.top-ar.top+r.height/2, pts);
+      t.classList.add('shrinking');
+      const _gs2 = gameSession;
+      setTimeout(() => { t.remove(); if (gameSession === _gs2 && gameData.time > 0) spawnDoubleTarget(cfg); }, 150);
+    });
+  }
+
   area.appendChild(t);
-  const lt = 3000 + size * 20;
-  setTimeout(() => { if (t.parentNode) { t.remove(); if (gameData.time>0) spawnDoubleTarget(cfg); } }, lt);
+
+  // Znikanie po czasie
+  const _gsdc = gameSession;
+  setTimeout(() => {
+    if (t.parentNode && gameSession === _gsdc && gameData.time > 0 && !t._done) {
+      t._done = true;
+      const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
+      addMiss(r.left-ar.left+r.width/2, r.top-ar.top+r.height/2);
+      t.remove();
+      spawnDoubleTarget(cfg);
+    } else if (t.parentNode) t.remove();
+  }, cfg.lifetime);
 }
+
+
 
 // =========================================================
 // DRAG & DROP
@@ -1180,7 +1334,8 @@ function startDrag(cfg, levelIdx) {
     dz.className = 'drop-zone';
     dz.dataset.color = item.color;
     const zoneW = 90, zoneH = 90;
-    const x = areaW - 120, y = 40 + i * (zoneH + 20);
+    const x = Math.min(areaW - zoneW - 10, areaW - 120);
+    const y = 40 + i * (zoneH + 20);
     dz.style.cssText = `width:${zoneW}px;height:${zoneH}px;left:${x}px;top:${y}px;border-color:${item.color}44;color:${item.color}44`;
     dz.textContent = item.emoji;
     area.appendChild(dz);
@@ -1288,7 +1443,9 @@ function tryDrop(el, area, cx, cy) {
 }
 
 function checkDragWin(total) {
+  const mySession = gameSession;
   const interval = setInterval(() => {
+    if (gameSession !== mySession) { clearInterval(interval); return; }
     const done = document.querySelectorAll('.drop-zone.done').length;
     if (done >= total) { clearInterval(interval); clearInterval(gameTimer); endGame(); }
     if (gameData.time <= 0) clearInterval(interval);
@@ -1320,17 +1477,19 @@ function startMaze(cfg, levelIdx) {
   mazeCanvas = canvas;
   mazeCtx = canvas.getContext('2d');
 
-  const cols = Math.max(Math.floor((canvas.width  - 20) / CELL), 4);
-  const rows = Math.max(Math.floor((canvas.height - 60) / CELL), 4);
+  // Rozmiar labiryntu zależy od poziomu trudności
+  const cellSize = levelIdx === 0 ? 48 : levelIdx === 1 ? 36 : 26;
+  const cols = Math.max(Math.floor((canvas.width  - 20) / cellSize), 4);
+  const rows = Math.max(Math.floor((canvas.height - 60) / cellSize), 4);
 
-  const maze = generateMaze(cols, rows, levelIdx);
-  const offsetX = Math.floor((canvas.width  - cols * CELL) / 2);
+  const maze = generateMaze(cols, rows, levelIdx, cellSize);
+  const offsetX = Math.floor((canvas.width  - cols * cellSize) / 2);
   const offsetY = 30;
 
   mazeData = {
-    maze, cols, rows, offsetX, offsetY,
-    ballX: offsetX + CELL * 0.5, ballY: offsetY + CELL * 0.5,
-    startX: offsetX + CELL * 0.5, startY: offsetY + CELL * 0.5,
+    maze, cols, rows, offsetX, offsetY, cellSize,
+    ballX: offsetX + cellSize * 0.5, ballY: offsetY + cellSize * 0.5,
+    startX: offsetX + cellSize * 0.5, startY: offsetY + cellSize * 0.5,
     endCol: cols - 1, endRow: rows - 1,
     hitWall: false, completed: false, frozen: false, touches: 0
   };
@@ -1344,7 +1503,8 @@ function startMaze(cfg, levelIdx) {
   startTimer();
 }
 
-function generateMaze(cols, rows, difficulty) {
+function generateMaze(cols, rows, difficulty, cellSize) {
+  cellSize = cellSize || 40;
   // Simple DFS maze
   const cells = Array.from({length: rows}, () => Array.from({length: cols}, () => ({ visited: false, walls: [true,true,true,true] })));
   const stack = [];
@@ -1377,7 +1537,8 @@ function generateMaze(cols, rows, difficulty) {
 
 function drawMaze() {
   const ctx = mazeCtx;
-  const {maze,cols,rows,offsetX,offsetY,ballX,ballY,endCol,endRow} = mazeData;
+  const {maze,cols,rows,offsetX,offsetY,ballX,ballY,endCol,endRow,cellSize:CS} = mazeData;
+  const CELLSZ = CS || 40;
   ctx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
 
   // Background
@@ -1386,20 +1547,20 @@ function drawMaze() {
 
   // End cell highlight
   ctx.fillStyle = 'rgba(0,230,118,0.15)';
-  ctx.fillRect(offsetX + endCol*CELL+2, offsetY + endRow*CELL+2, CELL-4, CELL-4);
+  ctx.fillRect(offsetX + endCol*CELLSZ+2, offsetY + endRow*CELLSZ+2, CELLSZ-4, CELLSZ-4);
 
   // Walls
   ctx.strokeStyle = '#2a4a6a';
   ctx.lineWidth = 2;
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const x = offsetX + c * CELL, y = offsetY + r * CELL;
+      const x = offsetX + c * CELLSZ, y = offsetY + r * CELLSZ;
       const cell = maze[r][c];
       ctx.beginPath();
-      if (cell.walls[0]) { ctx.moveTo(x,y); ctx.lineTo(x+CELL,y); } // top
-      if (cell.walls[1]) { ctx.moveTo(x+CELL,y); ctx.lineTo(x+CELL,y+CELL); } // right
-      if (cell.walls[2]) { ctx.moveTo(x+CELL,y+CELL); ctx.lineTo(x,y+CELL); } // bottom
-      if (cell.walls[3]) { ctx.moveTo(x,y+CELL); ctx.lineTo(x,y); } // left
+      if (cell.walls[0]) { ctx.moveTo(x,y); ctx.lineTo(x+CELLSZ,y); } // top
+      if (cell.walls[1]) { ctx.moveTo(x+CELLSZ,y); ctx.lineTo(x+CELLSZ,y+CELLSZ); } // right
+      if (cell.walls[2]) { ctx.moveTo(x+CELLSZ,y+CELLSZ); ctx.lineTo(x,y+CELLSZ); } // bottom
+      if (cell.walls[3]) { ctx.moveTo(x,y+CELLSZ); ctx.lineTo(x,y); } // left
       ctx.stroke();
     }
   }
@@ -1408,11 +1569,11 @@ function drawMaze() {
   ctx.fillStyle = '#00d4ff';
   ctx.font = 'bold 11px Nunito';
   ctx.textAlign = 'center';
-  ctx.fillText('START', offsetX + CELL/2, offsetY - 5);
+  ctx.fillText('START', offsetX + CELLSZ/2, offsetY - 5);
 
   // END label
   ctx.fillStyle = '#00e676';
-  ctx.fillText('META', offsetX + endCol*CELL + CELL/2, offsetY + endRow*CELL + CELL/2 + 5);
+  ctx.fillText('META', offsetX + endCol*CELLSZ + CELLSZ/2, offsetY + endRow*CELLSZ + CELLSZ/2 + 5);
 
   // Ball
   const grd = ctx.createRadialGradient(ballX, ballY, 2, ballX, ballY, 14);
@@ -1441,13 +1602,13 @@ function drawMaze() {
     ctx.strokeStyle = `rgba(255,80,80,${0.5 + 0.5 * pulse})`;
     ctx.lineWidth = 3 + pulse * 3;
     ctx.beginPath();
-    ctx.arc(mazeData.startX, mazeData.startY, CELL * 0.75, 0, Math.PI * 2);
+    ctx.arc(mazeData.startX, mazeData.startY, CELLSZ * 0.75, 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.fillStyle = `rgba(255,100,100,${0.3 + 0.4 * pulse})`;
     ctx.font = 'bold 12px Nunito, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('↩ wróć tu!', mazeData.startX, mazeData.startY + CELL * 1.3);
+    ctx.fillText('↩ wróć tu!', mazeData.startX, mazeData.startY + CELLSZ * 1.3);
     ctx.lineWidth = 1;
 
     // Schedule next frame to keep pulsing
@@ -1457,6 +1618,7 @@ function drawMaze() {
 
 function onMazeMouse(e) {
   if (!mazeData || mazeData.completed || gameData.time <= 0) return;
+  const CELLSZ = mazeData.cellSize || 40;
   const rect = mazeCanvas.getBoundingClientRect();
   // Scale mouse position from CSS pixels to canvas pixels (should be 1:1 now)
   const scaleX = mazeCanvas.width  / rect.width;
@@ -1468,16 +1630,16 @@ function onMazeMouse(e) {
   const {offsetX, offsetY, cols, rows, maze, startX, startY, endCol, endRow} = mazeData;
 
   // Check wall collision
-  const col = Math.floor((mx - offsetX) / CELL);
-  const row = Math.floor((my - offsetY) / CELL);
-  const ballCol = Math.floor((mazeData.ballX - offsetX) / CELL);
-  const ballRow = Math.floor((mazeData.ballY - offsetY) / CELL);
+  const col = Math.floor((mx - offsetX) / CELLSZ);
+  const row = Math.floor((my - offsetY) / CELLSZ);
+  const ballCol = Math.floor((mazeData.ballX - offsetX) / CELLSZ);
+  const ballRow = Math.floor((mazeData.ballY - offsetY) / CELLSZ);
 
   let wallHit = false;
   if (col < 0 || col >= cols || row < 0 || row >= rows) {
     wallHit = true;
   } else {
-    const cellX = offsetX + col * CELL, cellY = offsetY + row * CELL;
+    const cellX = offsetX + col * CELLSZ, cellY = offsetY + row * CELLSZ;
     const margin = 10;
     if (col !== ballCol || row !== ballRow) {
       // Moving to new cell - check wall
@@ -1494,9 +1656,9 @@ function onMazeMouse(e) {
     if (maze[row] && maze[row][col]) {
       const cell = maze[row][col];
       if (cell.walls[0] && localY < margin) wallHit = true;
-      if (cell.walls[2] && localY > CELL - margin) wallHit = true;
+      if (cell.walls[2] && localY > CELLSZ - margin) wallHit = true;
       if (cell.walls[3] && localX < margin) wallHit = true;
-      if (cell.walls[1] && localX > CELL - margin) wallHit = true;
+      if (cell.walls[1] && localX > CELLSZ - margin) wallHit = true;
     }
   }
 
@@ -1514,7 +1676,7 @@ function onMazeMouse(e) {
   // If frozen after wall hit: only unfreeze when cursor/finger is close to start
   if (mazeData.frozen) {
     const dx = mx - startX, dy = my - startY;
-    if (Math.sqrt(dx*dx + dy*dy) < CELL * 0.8) {
+    if (Math.sqrt(dx*dx + dy*dy) < CELLSZ * 0.8) {
       mazeData.frozen = false;
     } else {
       // Keep ball visible at start while waiting
@@ -1619,9 +1781,10 @@ function spawnMixed(levelIdx) {
       const r = good.getBoundingClientRect(), ar = area.getBoundingClientRect();
       addHit(r.left - ar.left + r.width/2, r.top - ar.top + r.height/2, 160);
       [...area.querySelectorAll('.target')].forEach(t => { t.classList.add('shrinking'); });
+      const _gsMxPH = gameSession;
       setTimeout(() => {
         [...area.querySelectorAll('.target')].forEach(t => t.remove());
-        if (gameData.time > 0) spawnMixed(levelIdx);
+        if (gameSession === _gsMxPH && gameData.time > 0) spawnMixed(levelIdx);
       }, 150);
     });
     area.appendChild(good);
@@ -1656,8 +1819,9 @@ function spawnMixed(levelIdx) {
     });
 
     // Timeout — jeśli gracz nie kliknie gwiazdki w czasie
+    const _gsMxPT = gameSession;
     const precTimer = setTimeout(() => {
-      if (precDone) return;
+      if (precDone || gameSession !== _gsMxPT) return;
       precDone = true;
       [...area.querySelectorAll('.target')].forEach(t => t.remove());
       if (gameData.time > 0) spawnMixed(levelIdx);
@@ -1680,15 +1844,19 @@ function spawnMixed(levelIdx) {
       `color:#000`, `line-height:${size}px`, `text-align:center`,
     ].join(';');
     t.textContent = '1×';
+    let mxsDone = false;
     onActivate(t, (e) => {
       e.stopPropagation();
+      if (mxsDone) return; mxsDone = true;
       const r = t.getBoundingClientRect(), ar = area.getBoundingClientRect();
       addHit(r.left - ar.left + r.width/2, r.top - ar.top + r.height/2, 120);
       t.classList.add('shrinking');
-      setTimeout(() => { t.remove(); if (gameData.time > 0) spawnMixed(levelIdx); }, 150);
+      const _gsMxSH = gameSession;
+      setTimeout(() => { t.remove(); if (gameSession === _gsMxSH && gameData.time > 0) spawnMixed(levelIdx); }, 150);
     });
     area.appendChild(t);
-    setTimeout(() => { if (t.parentNode) { t.remove(); if (gameData.time > 0) spawnMixed(levelIdx); } }, 3500);
+    const _gsMxS = gameSession;
+    setTimeout(() => { if (t.parentNode && gameSession === _gsMxS) { t.remove(); if (gameData.time > 0) spawnMixed(levelIdx); } }, 3500);
     return;
   }
 
@@ -1716,13 +1884,15 @@ function spawnMixed(levelIdx) {
       clicks = 0;
       addHit(cx, cy, 180);
       t.classList.add('shrinking');
-      setTimeout(() => { t.remove(); if (gameData.time > 0) spawnMixed(levelIdx); }, 150);
+      const _gsMxDH = gameSession;
+      setTimeout(() => { t.remove(); if (gameSession === _gsMxDH && gameData.time > 0) spawnMixed(levelIdx); }, 150);
     } else {
       ct = setTimeout(() => { addMiss(cx, cy); clicks = 0; }, 500);
     }
   });
   area.appendChild(t);
-  setTimeout(() => { if (t.parentNode) { t.remove(); if (gameData.time > 0) spawnMixed(levelIdx); } }, 3500);
+  const _gsMxD = gameSession;
+  setTimeout(() => { if (t.parentNode && gameSession === _gsMxD) { t.remove(); if (gameData.time > 0) spawnMixed(levelIdx); } }, 3500);
 }
 // =========================================================
 // END GAME
@@ -1733,6 +1903,14 @@ function endGame() {
   area.onclick = null; area.ondblclick = null;
   area.querySelectorAll('.target,.drag-item').forEach(e => e.remove());
   document.removeEventListener('mousemove', onMazeMouse);
+  document.removeEventListener('touchmove', onMazeTouchMove);
+  // Wyczyść panel precyzji i jego timer
+  if (area.dataset.precTimer) { clearTimeout(parseInt(area.dataset.precTimer)); delete area.dataset.precTimer; }
+  const precPanel = document.getElementById('prec-panel');
+  if (precPanel) precPanel.remove();
+  // Przywróć widoczność instrukcji
+  const instr = document.getElementById('g-instruction');
+  if (instr) instr.style.display = '';
 
   const total = gameData.hits + gameData.miss;
   const acc = total > 0 ? Math.round((gameData.hits / total) * 100) : 0;
@@ -1799,11 +1977,11 @@ loadState();
 // =========================================================
 const GAME_META = {
   click_basic:     { title:'Kliknij cel!',        icon:'👆', color:'#00e676',
-    levels:[{label:'Łatwy',desc:'Duże koła, dużo czasu',time:40,minSize:60,maxSize:90},{label:'Średni',desc:'Mniejsze koła, mniej czasu',time:30,minSize:40,maxSize:70},{label:'Trudny',desc:'Małe i szybkie – sprawdź się!',time:25,minSize:44,maxSize:60}]},
+    levels:[{label:'Łatwy',desc:'Klikaj koła które się pojawiają',time:40},{label:'Średni',desc:'Mniejsze cele, szybciej znikają',time:30},{label:'Trudny',desc:'Małe i błyskawiczne!',time:25}]},
   click_precision: { title:'Precyzja',            icon:'🎯', color:'#ffd740',
-    levels:[{label:'Łatwy',desc:'Klikaj tylko gwiazdki ★',time:40},{label:'Średni',desc:'Klikaj tylko zielone kształty',time:35},{label:'Trudny',desc:'Klikaj tylko niebieskie koła',time:30}]},
+    levels:[{label:'Łatwy',desc:'Kliknij figurę z lewego panelu – tylko kolor różny',time:40},{label:'Średni',desc:'Kształt i kolor – cele co 4s się zmieniają',time:35},{label:'Trudny',desc:'Szybka rotacja co 2.5s – bądź czujny!',time:30}]},
   double_click:    { title:'Podwójne kliknięcie', icon:'✌️', color:'#ff4081',
-    levels:[{label:'Łatwy',desc:'Duże cele, dużo czasu',time:40,minSize:70,maxSize:90},{label:'Średni',desc:'Mniejsze cele',time:35,minSize:55,maxSize:75},{label:'Trudny',desc:'Małe cele, szybki podwójny klik',time:28,minSize:50,maxSize:68}]},
+    levels:[{label:'Łatwy',desc:'Klikaj 2× w fioletowe cele',time:40},{label:'Średni',desc:'🔵 2× klik | 🟢 1× klik – czytaj!',time:35},{label:'Trudny',desc:'Mix 1× i 2× – szybciej i mniejsze!',time:28}]},
   drag:            { title:'Przeciąganie',        icon:'✋', color:'#d500f9',
     levels:[{label:'Łatwy',desc:'3 pary do dopasowania',time:60,pairs:3},{label:'Średni',desc:'4 pary do dopasowania',time:50,pairs:4},{label:'Trudny',desc:'5 par – mistrz przeciągania!',time:45,pairs:5}]},
   maze:            { title:'Labirynt',            icon:'🌀', color:'#00d4ff',
@@ -1880,6 +2058,13 @@ window.addEventListener('popstate', function() {
 
 _dispatch(location.hash.slice(1) || 'menu');
 
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('./sw.js')
+    .then(() => console.log('SW zarejestrowany'))
+    .catch(e => console.warn('SW błąd:', e));
+}
 </script>
 </body>
 </html>
