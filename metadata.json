@@ -1,0 +1,8 @@
+{
+  "name": "Szkoła Myszki",
+  "description": "Nauka obsługi myszy i touchpada – ćwiczenia dla uczniów",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
