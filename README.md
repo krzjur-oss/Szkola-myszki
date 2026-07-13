@@ -57,28 +57,35 @@ Uczniowie mogą zainstalować grę na swoim urządzeniu bez sklepu z aplikacjami
 
 ## 📁 Struktura plików
 
+Gra została skonsolidowana do formy jedno-plikowej, co pozwala na błyskawiczne wczytywanie, brak konieczności budowania (build step) oraz niezwykle prostą instalację i hosting na GitHub Pages.
+
 ```
-index.html              ← główna powłoka aplikacji (router, CSS, start)
-manifest.json           ← konfiguracja PWA
-sw.js                   ← Service Worker (cache offline)
-icon-192.png            ← ikona aplikacji 192×192
-icon-512.png            ← ikona aplikacji 512×512
+index.html              ← główny plik aplikacji (zawiera style CSS, router, silnik gier i logikę poziomów)
+manifest.json           ← konfiguracja PWA (nazwa, ikony, kolory startowe)
+sw.js                   ← Service Worker (odpowiada za pełne działanie offline)
+icon-192.png            ← ikona aplikacji 192×192 px
+icon-512.png            ← ikona aplikacji 512×512 px
 README.md               ← ten plik
-│
-├── core/               ← silnik aplikacji
-│   ├── engine.js       ← timer, punkty, efekty, resize
-│   ├── router.js       ← nawigacja hash-based (#menu, #game/maze/2)
-│   ├── state.js        ← localStorage, statystyki, gwiazdki
-│   └── ui.js           ← ekrany: menu, wybór poziomu, wyniki, tutorial
-│
-└── games/              ← moduły gier (każda gra = osobny plik)
-    ├── click-basic.js  ← Kliknij cel!
-    ├── precision.js    ← Precyzja
-    ├── double-click.js ← Podwójne kliknięcie
-    ├── drag.js         ← Przeciąganie
-    ├── maze.js         ← Labirynt
-    └── mixed.js        ← Wyzwanie!
 ```
+
+---
+
+## 🚀 Jak włączyć publikację na GitHub Pages (PWA)
+
+Projekt jest w 100% gotowy do automatycznej publikacji za pomocą **GitHub Pages** jako progresywna aplikacja internetowa (PWA). Nie wymaga żadnego serwera ani kompilacji!
+
+Aby uruchomić grę pod własnym adresem:
+1. Wgraj pliki projektu na swoje repozytorium w serwisie GitHub.
+2. Wejdź w **Settings** (Ustawienia) swojego repozytorium.
+3. W menu po lewej stronie wybierz zakładkę **Pages**.
+4. W sekcji **Build and deployment > Source** upewnij się, że wybrane jest **Deploy from a branch**.
+5. W polu **Branch** wybierz swoją główną gałąź (zazwyczaj `main` lub `master`) oraz folder `/ (root)` i kliknij **Save**.
+6. Po około minucie Twoja gra będzie dostępna publicznie pod adresem:  
+   `https://<twój-login-github>.github.io/<nazwa-repozytorium>/`
+
+Aplikacja automatycznie wykryje ścieżkę podkatalogu i zainstaluje Service Workera, dzięki czemu uczniowie będą mogli pobrać ją na swoje urządzenia jednym kliknięciem!
+
+---
 
 ---
 
