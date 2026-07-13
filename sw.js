@@ -1,4 +1,4 @@
-const CACHE = 'szkola-myszki-v3';
+const CACHE = 'szkola-myszki-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -21,7 +21,21 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
+    fetch(e.request)
+      .then(response => {
+        if (response && response.status === 200 && e.request.url.startsWith('http')) {
+          const responseToCache = response.clone();
+          caches.open(CACHE).then(cache => {
+            cache.put(e.request, responseToCache);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(e.request);
+      })
   );
 });

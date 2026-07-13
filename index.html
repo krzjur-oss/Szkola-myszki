@@ -159,13 +159,48 @@
     background: rgba(22, 38, 59, 0.85);
     box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 15px var(--cat-color);
   }
-  .cat-header { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .cat-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
   .cat-icon { 
-    font-size: 2.3rem; 
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-size: 2.0rem; 
+    width: 54px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgba(255, 255, 255, 0.06);
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                background 0.3s ease,
+                border-color 0.4s ease,
+                box-shadow 0.3s ease,
+                filter 0.3s ease;
+    animation: iconFadeScaleIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.15) both;
+  }
+  .category-card:nth-child(1) .cat-icon { animation-delay: 0.1s; }
+  .category-card:nth-child(2) .cat-icon { animation-delay: 0.2s; }
+  .category-card:nth-child(3) .cat-icon { animation-delay: 0.3s; }
+  .category-card:nth-child(4) .cat-icon { animation-delay: 0.4s; }
+  .category-card:nth-child(5) .cat-icon { animation-delay: 0.5s; }
+  .category-card:nth-child(6) .cat-icon { animation-delay: 0.6s; }
+
+  @keyframes iconFadeScaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
   .category-card:hover .cat-icon {
-    transform: scale(1.25) rotate(8deg);
+    transform: scale(1.18) rotate(8deg);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--cat-color);
+    box-shadow: 0 0 12px var(--cat-color);
+    filter: brightness(1.25) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 6px var(--cat-color));
   }
   .cat-title { font-family: 'Fredoka One', cursive; font-size: 1.3rem; color: var(--cat-color); text-shadow: 0 0 10px rgba(0,0,0,0.4); }
   .cat-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.5; margin-bottom: 16px; }
@@ -552,6 +587,166 @@
   .tutorial-box .btn { margin-top: 22px; width: 100%; }
   .hidden { display: none !important; }
 
+  /* INFO MODAL */
+  .info-box {
+    background: #0f1c2c;
+    border: 2px solid var(--accent);
+    border-radius: 24px;
+    padding: 30px;
+    max-width: 650px;
+    width: 100%;
+    box-shadow: 0 0 60px rgba(0,212,255,0.25);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards;
+  }
+  @keyframes scaleUp {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .info-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+  .info-close-btn:hover {
+    color: var(--red);
+  }
+  .info-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+  }
+  .info-tabs::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+  .info-tab-btn {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .info-tab-btn:hover {
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+  }
+  .info-tab-btn.active {
+    background: var(--accent);
+    color: #070d14;
+    border-color: transparent;
+    font-weight: 800;
+    box-shadow: 0 0 10px rgba(0,212,255,0.3);
+  }
+  .info-content-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+    margin-bottom: 15px;
+    text-align: left;
+  }
+  .info-tab-content {
+    animation: fadeIn 0.25s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .info-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: #fff;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(0,212,255,0.15);
+  }
+  .info-p {
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  .info-p strong {
+    color: var(--accent);
+  }
+  .info-list {
+    margin: 12px 0 16px 20px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .info-list li {
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+  .info-list li strong {
+    color: var(--yellow);
+  }
+  .info-scroll-container {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  
+  /* APP FOOTER */
+  .app-footer {
+    margin-top: 50px;
+    padding: 30px 20px 10px 20px;
+    border-top: 1.5px solid var(--border);
+    width: 100%;
+    max-width: 760px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    animation: fadeIn 0.8s ease-out;
+  }
+  .footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+  .footer-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .footer-link:hover {
+    color: var(--green);
+    text-shadow: 0 0 8px rgba(0,230,118,0.3);
+    transform: translateY(-1px);
+  }
+  .footer-copy {
+    font-size: 0.78rem;
+    font-weight: 700;
+    opacity: 0.8;
+  }
+
   /* TRAIL */
   #cursor-trail { position: fixed; pointer-events: none; z-index: 9999; }
   .trail-dot {
@@ -614,6 +809,11 @@
   .level-game-title { font-family:'Fredoka One',cursive; font-size:clamp(1.4rem,4vw,2.2rem); display:flex; align-items:center; gap:12px; }
   .level-game-desc { color:var(--muted); font-weight:700; font-size:0.95rem; margin-bottom:28px; text-align:center; flex-shrink:0; }
   .level-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr)); gap:20px; width:100%; max-width:760px; overflow-y:auto; }
+  @media (max-width: 600px) {
+    .level-cards {
+      grid-template-columns: 1fr;
+    }
+  }
   .level-card { 
     background:var(--card); 
     backdrop-filter: blur(8px);
@@ -1000,6 +1200,93 @@
   </div>
 </div>
 
+<!-- INFO MODAL -->
+<div class="tutorial-overlay hidden" id="info-modal" onclick="if(event.target === this) closeInfoModal()">
+  <div class="info-box">
+    <button class="info-close-btn" onclick="closeInfoModal()">×</button>
+    
+    <div class="info-tabs">
+      <button class="info-tab-btn active" id="tab-program" onclick="setInfoTab('program')">ℹ️ O programie</button>
+      <button class="info-tab-btn" id="tab-autor" onclick="setInfoTab('autor')">👤 O autorze</button>
+      <button class="info-tab-btn" id="tab-regulamin" onclick="setInfoTab('regulamin')">📋 Regulamin</button>
+      <button class="info-tab-btn" id="tab-licencja" onclick="setInfoTab('licencja')">📄 Licencja</button>
+    </div>
+    
+    <div class="info-content-wrap">
+      <!-- O PROGRAMIE -->
+      <div class="info-tab-content" id="content-program">
+        <h2 class="info-title">ℹ️ O programie "Szkoła Myszki"</h2>
+        <p class="info-p">
+          <strong>Szkoła Myszki</strong> to nowoczesny, w pełni interaktywny i bezpłatny trenażer online, stworzony specjalnie dla uczniów szkół podstawowych (zwłaszcza klas 1-3), przedszkolaków oraz osób starszych i wszystkich rozpoczynających naukę korzystania z komputera.
+        </p>
+        <p class="info-p">
+          Nasza aplikacja pomaga opanować kluczowe umiejętności obsługi kontrolera wskazującego:
+        </p>
+        <ul class="info-list">
+          <li><strong>Klikanie jedno- i dwukrotne:</strong> Ćwiczy precyzję i wyczucie czasu.</li>
+          <li><strong>Precyzyjne celowanie:</strong> Uczy koordynacji wzrokowo-ruchowej na mniejszych elementach.</li>
+          <li><strong>Przeciąganie i upuszczanie (Drag & Drop):</strong> Rozwija umiejętność chwytania i przenoszenia obiektów.</li>
+          <li><strong>Labirynty:</strong> Zaawansowane ćwiczenie ciągłego ruchu kursora bez uderzania o przeszkody.</li>
+        </ul>
+        <p class="info-p">
+          Dzięki systemowi trofeów, odznak i przyznawanych gwiazdek, proces nauki staje się wciągającą i motywującą grą.
+        </p>
+      </div>
+      
+      <!-- O AUTORZE -->
+      <div class="info-tab-content hidden" id="content-autor">
+        <h2 class="info-title">👤 O autorze</h2>
+        <p class="info-p">
+          Autorem i twórcą projektu <strong>Szkoła Myszki</strong> jest <strong>mgr Krzysztof Jureczek</strong>.
+        </p>
+        <p class="info-p">
+          Aplikacja powstała z pasji do edukacji cyfrowej i z myślą o ułatwieniu pracy nauczycielom informatyki, edukacji wczesnoszkolnej oraz terapeutom.
+        </p>
+        <p class="info-p">
+          Głównym celem autora było stworzenie narzędzia <strong>wolnego od reklam, rozpraszaczy i zbędnej konfiguracji</strong>. Narzędzia, które można uruchomić na dowolnym komputerze, tablecie z podłączoną myszką lub tablicy interaktywnej w zaledwie kilka sekund.
+        </p>
+        <p class="info-p" style="margin-top: 15px;">
+          Chcesz podzielić się opinią, zgłosić błąd lub zaproponować nową grę?
+          Skontaktuj się bezpośrednio z autorem!
+        </p>
+      </div>
+      
+      <!-- REGULAMIN -->
+      <div class="info-tab-content hidden" id="content-regulamin">
+        <h2 class="info-title">📋 Regulamin korzystania</h2>
+        <div class="info-scroll-container">
+          <p class="info-p"><strong>1. Postanowienia ogólne</strong><br>Aplikacja "Szkoła Myszki" jest bezpłatną platformą edukacyjną udostępnianą w przeglądarce internetowej. Korzystanie z aplikacji nie wymaga zakładania konta ani podawania jakichkolwiek danych osobowych.</p>
+          <p class="info-p"><strong>2. Prywatność i dane użytkownika</strong><br>Szanujemy Twoją prywatność. Aplikacja nie zbiera, nie wysyła ani nie przetwarza żadnych danych na serwerach zewnętrznych. Wszystkie wyniki gier, pseudonimy (nicki) oraz zdobyte gwiazdki i odznaki są zapisywane <strong>wyłącznie lokalnie w pamięci Twojej przeglądarki (LocalStorage)</strong>. Wyczyszczenie pamięci podręcznej przeglądarki spowoduje usunięcie postępów.</p>
+          <p class="info-p"><strong>3. Brak opłat i reklam</strong><br>Korzystanie z programu jest całkowicie bezpłatne. Program nie zawiera reklam, mikrotransakcji ani płatnych subskrypcji.</p>
+          <p class="info-p"><strong>4. Odpowiedzialność</strong><br>Program dostarczany jest w stanie "takim, jaki jest" (AS IS), bez jakichkolwiek gwarancji. Autor dokłada wszelkich starań, aby aplikacja działała stabilnie i bezbłędnie.</p>
+        </div>
+      </div>
+      
+      <!-- LICENCJA -->
+      <div class="info-tab-content hidden" id="content-licencja">
+        <h2 class="info-title">📄 Warunki Licencyjne</h2>
+        <p class="info-p">
+          Aplikacja <strong>Szkoła Myszki</strong> jest programem darmowym, przeznaczonym wyłącznie do użytku edukacyjnego oraz rozrywkowego.
+        </p>
+        <p class="info-p" style="color: var(--yellow); font-weight: 700;">
+          Użytkowanie aplikacji podlega następującym warunkom i ograniczeniom:
+        </p>
+        <ul class="info-list">
+          <li><strong>Zakaz kopiowania kodu:</strong> Kopiowanie, powielanie, pobieranie, dystrybucja lub dekompilacja kodu źródłowego aplikacji bez uprzedniej pisemnej zgody autora są surowo zabronione.</li>
+          <li><strong>Zakaz komercjalizacji:</strong> Program nie może być wykorzystywany w jakichkolwiek celach komercyjnych ani zarobkowych. Niedozwolone jest pobieranie opłat za dostęp do programu lub jego dystrybucję.</li>
+          <li><strong>Zakaz modyfikacji:</strong> Wszelkie modyfikacje kodu źródłowego, interfejsu, grafik, dźwięków, logotypów lub innych elementów aplikacji bez pisemnej zgody autora są niedozwolone.</li>
+        </ul>
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 14px; border-radius: 12px; font-family: 'Nunito', sans-serif; font-size: 0.85rem; line-height: 1.5; color: var(--muted); margin: 15px 0;">
+          <strong>Prawa autorskie zastrzeżone - Szkoła Myszki (Copyright © 2026 Krzysztof Jureczek)</strong><br><br>
+          Wszystkie prawa autorskie osobiste i majątkowe do programu "Szkoła Myszki", w tym do jego kodu źródłowego, grafik, logotypów, mechaniki gier i ścieżek dźwiękowych są własnością autora (mgr Krzysztof Jureczek). Korzystanie z aplikacji oznacza akceptację niniejszych warunków.
+        </div>
+      </div>
+    </div>
+    
+    <button class="btn btn-primary" style="margin-top: 15px;" onclick="closeInfoModal()">Rozumiem</button>
+  </div>
+</div>
+
 <!-- MENU -->
 <div class="screen active" id="menu-screen">
   <div class="logo">
@@ -1193,6 +1480,19 @@
     </div>
 
   </div>
+
+  <!-- FOOTER -->
+  <footer class="app-footer">
+    <div class="footer-links">
+      <span class="footer-link" onclick="openInfoModal('program')">ℹ️ O programie</span>
+      <span class="footer-link" onclick="openInfoModal('autor')">👤 O autorze</span>
+      <span class="footer-link" onclick="openInfoModal('regulamin')">📋 Regulamin</span>
+      <span class="footer-link" onclick="openInfoModal('licencja')">📄 Licencja</span>
+    </div>
+    <div class="footer-copy">
+      © 2026 Szkoła Myszki. Wszelkie prawa zastrzeżone. Darmowy użytek edukacyjny i rozrywkowy.
+    </div>
+  </footer>
 </div>
 
 <!-- GAME -->
@@ -1753,6 +2053,25 @@ function showTutorial(type, callback) {
 function closeTutorial() {
   document.getElementById('tutorial').classList.add('hidden');
   if (pendingTutorialCallback) { pendingTutorialCallback(); pendingTutorialCallback = null; }
+}
+
+// INFO MODAL HANDLERS
+function openInfoModal(initialTab = 'program') {
+  document.getElementById('info-modal').classList.remove('hidden');
+  setInfoTab(initialTab);
+}
+function closeInfoModal() {
+  document.getElementById('info-modal').classList.add('hidden');
+}
+function setInfoTab(tabId) {
+  const contents = document.querySelectorAll('.info-tab-content');
+  contents.forEach(el => el.classList.add('hidden'));
+  
+  const tabs = document.querySelectorAll('.info-tab-btn');
+  tabs.forEach(el => el.classList.remove('active'));
+  
+  document.getElementById(`content-${tabId}`).classList.remove('hidden');
+  document.getElementById(`tab-${tabId}`).classList.add('active');
 }
 
 // =========================================================
@@ -3208,6 +3527,7 @@ function drawFireworks() {
     p.vx *= 0.97;
     p.vy *= 0.97;
     p.life -= p.decay;
+    if (p.life < 0) p.life = 0;
 
     // Ogon
     if (p.trail.length > 1) {
@@ -3221,7 +3541,7 @@ function drawFireworks() {
 
     // Punkt
     _fwCtx.beginPath();
-    _fwCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    _fwCtx.arc(p.x, p.y, Math.max(0, p.size * p.life), 0, Math.PI * 2);
     _fwCtx.fillStyle = p.color + Math.round(p.life * 255).toString(16).padStart(2,'0');
     _fwCtx.fill();
   }

@@ -1,9 +1,18 @@
 # 🖱️ Szkoła Myszki
 
-Interaktywna aplikacja edukacyjna do nauki obsługi myszy i touchpada dla uczniów szkół podstawowych.  
-Działa jako **PWA** — można ją zainstalować na telefonie, tablecie i komputerze jak prawdziwą aplikację.
+Interaktywna aplikacja edukacyjna do nauki obsługi myszy i touchpada dla uczniów szkół podstawowych (zwłaszcza klas 1-3), przedszkolaków oraz osób starszych i wszystkich rozpoczynających naukę korzystania z komputera.  
+
+**Autor projektu:** mgr Krzysztof Jureczek  
+Działa jako **PWA (Progressive Web App)** — można ją zainstalować na telefonie, tablecie i komputerze i korzystać w pełni offline!
 
 🔗 **[► Uruchom grę](https://krzjur-oss.github.io/Szkola-myszki/)**
+
+---
+
+## 📋 Spis dokumentów prawno-informacyjnych
+Przed rozpoczęciem wdrażania lub użytkowania programu zapoznaj się z poniższymi dokumentami:
+* 📄 **[Warunki Licencyjne (LICENSE.md)](./LICENSE.md)** – szczegółowe zasady licencjonowania aplikacji.
+* 📋 **[Regulamin i Prywatność (REGULAMIN.md)](./REGULAMIN.md)** – regulamin korzystania oraz polityka prywatności (pamięć lokalna).
 
 ---
 
@@ -110,6 +119,20 @@ Aby dodać nową grę wystarczy:
 
 ---
 
-## 📄 Licencja
+## 📄 Licencja i Regulamin
 
-Projekt edukacyjny — możesz swobodnie używać, kopiować i modyfikować na potrzeby szkolne.
+Program **Szkoła Myszki** jest aplikacją darmową przeznaczoną wyłącznie do użytku **edukacyjnego oraz rozrywkowego**. 
+
+Zabrania się:
+- Kopiowania lub powielania kodu źródłowego aplikacji bez pisemnej zgody autora.
+- Komercjalizacji, pobierania opłat za dostęp lub dystrybuowania programu w celach zarobkowych.
+- Modyfikowania kodu, grafik, dźwięków lub logotypów bez pisemnej zgody autora.
+
+Pełne, szczegółowe zapisy prawne oraz regulacje dotyczące prywatności i ochrony danych znajdują się w osobnych plikach:
+* 📄 **[Pełne Warunki Licencyjne (LICENSE.md)](./LICENSE.md)**
+* 📋 **[Regulamin i Prywatność (REGULAMIN.md)](./REGULAMIN.md)**
+
+---
+
+**Copyright © 2026 Krzysztof Jureczek. Wszelkie prawa zastrzeżone.**
+
