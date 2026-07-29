@@ -1,4 +1,4 @@
-const CACHE = 'szkola-myszki-v5';
+const CACHE = 'szkola-myszki-v7';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -6,39 +6,31 @@ const LOCAL_ASSETS = [
   './icon-192.png',
   './icon-512.png',
 ];
-const FONT_URL = 'https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap';
 
 self.addEventListener('install', e => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE).then(async cache => {
-      await cache.addAll(LOCAL_ASSETS).catch(() => {});
       try {
-        const fontRes = await fetch(FONT_URL, { mode: 'no-cors' });
-        if (fontRes) {
-          await cache.put(FONT_URL, fontRes);
-        }
-      } catch (err) {
-        // Ignorujemy błąd pobierania czcionek – nie blokuje to instalacji Service Workera
-      }
+        await cache.addAll(LOCAL_ASSETS);
+      } catch (err) {}
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
-  // Obsługa nawigacji (strona główna / podstrony / PWA offline)
-  if (e.request.mode === 'navigate') {
+  // Always prefer network for navigation/html to get fresh app updates immediately
+  if (e.request.mode === 'navigate' || (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html'))) {
     e.respondWith(
       fetch(e.request)
         .then(response => {
@@ -57,7 +49,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Pozostałe zasoby (obrazy, czcionki, skrypty)
+  // Network-first for all other assets with cache fallback
   e.respondWith(
     fetch(e.request)
       .then(response => {
@@ -70,9 +62,7 @@ self.addEventListener('fetch', e => {
       .catch(async () => {
         const cached = await caches.match(e.request, { ignoreSearch: true });
         if (cached) return cached;
-        if (e.request.destination === 'image') {
-          return caches.match('./icon-192.png');
-        }
+        return new Response('', { status: 404, statusText: 'Not Found' });
       })
   );
 });

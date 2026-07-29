@@ -390,6 +390,23 @@ window.addEventListener('unhandledrejection', function() {
     100% { transform: translate(-50%,-50%) scale(2.6); opacity: 0; filter: blur(4px); }
   }
 
+  /* ANIMATED TOUCH RING FOR TOUCHFEEDBACK */
+  .touch-ring {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    pointer-events: none;
+    border: 3px solid #00d4ff;
+    box-shadow: 0 0 10px #00d4ff, inset 0 0 10px #00d4ff;
+    animation: touchRingExpand 0.45s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+    z-index: 1000;
+  }
+  @keyframes touchRingExpand {
+    0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+  }
+
   /* BURST PARTICLES */
   .hit-particle {
     position: absolute;
@@ -2035,42 +2052,56 @@ function submitScore() {
 }
 
 function updateMenuStats() {
-  document.getElementById('total-score').textContent = state.totalScore;
-  document.getElementById('total-games').textContent = state.totalGames;
-  document.getElementById('total-stars').textContent = '⭐ ' + state.totalStars;
-  document.getElementById('best-acc').textContent = state.bestAcc ? state.bestAcc + '%' : '-';
-  // badges
-  for (const [k,v] of Object.entries(state.completed)) {
-    const el = document.getElementById('b-' + k);
-    if (el) el.classList.add('done');
+  try {
+    const elScore = document.getElementById('total-score');
+    if (elScore) elScore.textContent = state.totalScore || 0;
+
+    const elGames = document.getElementById('total-games');
+    if (elGames) elGames.textContent = state.totalGames || 0;
+
+    const elStars = document.getElementById('total-stars');
+    if (elStars) elStars.textContent = '⭐ ' + (state.totalStars || 0);
+
+    const elAcc = document.getElementById('best-acc');
+    if (elAcc) elAcc.textContent = state.bestAcc ? state.bestAcc + '%' : '-';
+
+    if (state.completed) {
+      for (const [k, v] of Object.entries(state.completed)) {
+        const el = document.getElementById('b-' + k);
+        if (el) el.classList.add('done');
+      }
+    }
+
+    const categories = ['click_basic', 'click_precision', 'double_click', 'drag', 'maze', 'mixed'];
+    categories.forEach(catId => {
+      let threeStarCount = 0;
+      if (state.completed) {
+        for (let lvl = 1; lvl <= 3; lvl++) {
+          const key = catId + '-' + lvl;
+          if (state.completed[key] === 3) {
+            threeStarCount++;
+          }
+        }
+      }
+
+      const trophyCard = document.getElementById('trophy-' + catId);
+      const progressEl = document.getElementById('progress-' + catId);
+
+      if (progressEl) {
+        progressEl.innerHTML = `⭐ <span>${threeStarCount}/3</span>`;
+      }
+
+      if (trophyCard) {
+        if (threeStarCount === 3) {
+          trophyCard.classList.add('unlocked');
+        } else {
+          trophyCard.classList.remove('unlocked');
+        }
+      }
+    });
+  } catch(e) {
+    console.warn('Błąd updateMenuStats:', e);
   }
-
-  // Update Trophies
-  const categories = ['click_basic', 'click_precision', 'double_click', 'drag', 'maze', 'mixed'];
-  categories.forEach(catId => {
-    let threeStarCount = 0;
-    for (let lvl = 1; lvl <= 3; lvl++) {
-      const key = catId + '-' + lvl;
-      if (state.completed[key] === 3) {
-        threeStarCount++;
-      }
-    }
-
-    const trophyCard = document.getElementById('trophy-' + catId);
-    const progressEl = document.getElementById('progress-' + catId);
-
-    if (progressEl) {
-      progressEl.innerHTML = `⭐ <span>${threeStarCount}/3</span>`;
-    }
-
-    if (trophyCard) {
-      if (threeStarCount === 3) {
-        trophyCard.classList.add('unlocked');
-      } else {
-        trophyCard.classList.remove('unlocked');
-      }
-    }
-  });
 }
 
 // =========================================================
@@ -2340,6 +2371,36 @@ function spawnHitEffect(x, y, pts, color, label, soundOverride) {
 
   setTimeout(() => { ef.remove(); pop.remove(); }, 800);
 }
+
+function spawnTouchRing(x, y) {
+  const area = document.getElementById('game-area');
+  if (!area || isNaN(x) || isNaN(y)) return;
+  const ring = document.createElement('div');
+  ring.className = 'touch-ring';
+  ring.style.left = x + 'px';
+  ring.style.top = y + 'px';
+  area.appendChild(ring);
+  setTimeout(() => ring.remove(), 450);
+}
+
+document.addEventListener('touchstart', function(e) {
+  const area = document.getElementById('game-area');
+  if (!area) return;
+  const rect = area.getBoundingClientRect();
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const touch = e.changedTouches[i];
+    if (
+      touch.clientX >= rect.left &&
+      touch.clientX <= rect.right &&
+      touch.clientY >= rect.top &&
+      touch.clientY <= rect.bottom
+    ) {
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      spawnTouchRing(x, y);
+    }
+  }
+}, { passive: true });
 
 function getAreaRect() {
   return document.getElementById('game-area').getBoundingClientRect();
@@ -3889,18 +3950,38 @@ window.addEventListener('popstate', function() {
   }
 });
 
-try {
-  loadState();
-  _dispatch(location.hash.slice(1) || 'menu');
-} catch(e) {
-  showScreen('menu-screen');
+function initApp() {
+  try {
+    loadState();
+  } catch(e) {}
+  
+  try {
+    _dispatch(location.hash.slice(1) || 'menu');
+  } catch(e) {
+    showScreen('menu-screen');
+  }
+
+  // Double check that at least one screen has the active class
+  if (!document.querySelector('.screen.active')) {
+    const m = document.getElementById('menu-screen');
+    if (m) m.classList.add('active');
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
 }
 
 </script>
 <script>
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
   navigator.serviceWorker.register('./sw.js')
-    .then(function() { console.log('SW zarejestrowany'); })
+    .then(function(reg) { 
+      console.log('SW zarejestrowany'); 
+      try { reg.update(); } catch(e) {}
+    })
     .catch(function(e) { console.warn('SW błąd:', e); });
 }
 </script>
