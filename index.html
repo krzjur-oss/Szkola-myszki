@@ -12,21 +12,27 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <script>
-window.addEventListener('error', function() {
+window.addEventListener('error', function(e) {
   try {
+    if (e && (e.error || e.message)) {
+      console.warn('Wyłapany błąd:', e.error || e.message);
+    }
     if (!document.querySelector('.screen.active')) {
       var m = document.getElementById('menu-screen');
       if (m) m.classList.add('active');
     }
-  } catch(e) {}
+  } catch(err) {}
 });
-window.addEventListener('unhandledrejection', function() {
+window.addEventListener('unhandledrejection', function(e) {
   try {
+    if (e && e.reason) {
+      console.warn('Wyłapana obietnica:', e.reason);
+    }
     if (!document.querySelector('.screen.active')) {
       var m = document.getElementById('menu-screen');
       if (m) m.classList.add('active');
     }
-  } catch(e) {}
+  } catch(err) {}
 });
 </script>
 <style>
@@ -3990,6 +3996,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   let clicks = 0;
   let timer = null;
   let vConsoleInstance = null;
+  let isShown = false;
 
   function onCornerClick(e) {
     clicks++;
@@ -4006,18 +4013,28 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   function toggleVConsole() {
     if (vConsoleInstance) {
       try {
-        if (typeof vConsoleInstance.show === 'function') {
-          vConsoleInstance.show();
+        if (isShown) {
+          if (typeof vConsoleInstance.hide === 'function') vConsoleInstance.hide();
+          isShown = false;
+        } else {
+          if (typeof vConsoleInstance.show === 'function') vConsoleInstance.show();
+          isShown = true;
         }
       } catch(err) {}
       return;
     }
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js';
+    script.crossOrigin = 'anonymous';
     script.onload = function() {
       if (window.VConsole) {
-        vConsoleInstance = new window.VConsole();
-        console.log('vConsole uruchomiona!');
+        try {
+          vConsoleInstance = new window.VConsole();
+          isShown = true;
+          console.log('vConsole uruchomiona!');
+        } catch(err) {
+          console.warn('Błąd inicjalizacji vConsole:', err);
+        }
       }
     };
     script.onerror = function() {
