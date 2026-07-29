@@ -41,12 +41,17 @@ export function startDrag(cfg, levelIdx) {
   const zoneW = Math.max(65, Math.round(90 * sizeFactor));
   const zoneH = Math.max(65, Math.round(90 * sizeFactor));
 
+  // Determine effective play span for high-resolution displays
+  const maxSpan = Math.min(areaW - zoneW - 20, 1100);
+  const leftOffset = areaW > 1150 ? Math.floor((areaW - maxSpan) / 2) : 10;
+  const rightOffset = areaW > 1150 ? Math.floor((areaW - maxSpan) / 2) : 10;
+
   // Drop zones on right
   items.forEach((item, i) => {
     const dz = document.createElement('div');
     dz.className = 'drop-zone';
     dz.dataset.color = item.color;
-    const x = Math.min(areaW - zoneW - 10, areaW - 130);
+    const x = areaW - rightOffset - zoneW;
     const dzSpacing = Math.min(zoneH + 15, Math.floor((area.offsetHeight - 80) / pairs));
     const y = 40 + i * dzSpacing;
     dz.style.cssText = `width:${zoneW}px;height:${zoneH}px;left:${x}px;top:${y}px;border-color:${item.color}44;color:${item.color}44;font-size:${Math.round(zoneW*0.45)}px;line-height:${zoneH}px`;
@@ -64,7 +69,7 @@ export function startDrag(cfg, levelIdx) {
     di.className = 'drag-item';
     di.dataset.color = item.color;
     const spacing = Math.min(110, Math.floor((area.offsetHeight - 80) / pairs));
-    const x = 30 + Math.random() * 80, y = 40 + i * spacing;
+    const x = leftOffset + 20 + Math.random() * 80, y = 40 + i * spacing;
     di.style.cssText = `width:${itemW}px;height:${itemH}px;left:${x}px;top:${y}px;background:${item.color}22;border-color:${item.color};font-size:${Math.round(itemW*0.48)}px;line-height:${itemH}px`;
     di.textContent = item.emoji;
     makeDraggable(di, area);

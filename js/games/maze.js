@@ -34,10 +34,13 @@ export function startMaze(cfg, levelIdx) {
   const screenW = window.innerWidth || canvas.width;
   const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
   const isSmallScreen = screenW < 768 || canvas.width < 550;
+  const isLargeScreen = screenW >= 1400 || canvas.width >= 1200;
   const isSmallTouch = isTouchDevice && isSmallScreen;
 
   let baseCellSize = levelIdx === 0 ? 48 : levelIdx === 1 ? 36 : 26;
-  if (isSmallTouch) {
+  if (isLargeScreen) {
+    baseCellSize = levelIdx === 0 ? 58 : levelIdx === 1 ? 44 : 34;
+  } else if (isSmallTouch) {
     baseCellSize = levelIdx === 0 ? 56 : levelIdx === 1 ? 44 : 34;
   } else if (isSmallScreen) {
     baseCellSize = levelIdx === 0 ? 50 : levelIdx === 1 ? 38 : 28;
