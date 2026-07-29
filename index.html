@@ -1867,31 +1867,50 @@ const state = {
   rankings: {},
   playerNickname: 'Myszka'
 };
-const saveState = () => localStorage.setItem('mousegame', JSON.stringify(state));
+const saveState = () => {
+  try {
+    localStorage.setItem('mousegame', JSON.stringify(state));
+  } catch(e) {}
+};
+
 const loadState = () => {
-  const d = localStorage.getItem('mousegame');
-  if (d) {
-    try {
-      Object.assign(state, JSON.parse(d));
-    } catch(e) {}
+  try {
+    const d = localStorage.getItem('mousegame');
+    if (d) {
+      try {
+        Object.assign(state, JSON.parse(d));
+      } catch(e) {}
+    }
+    if (!state.completed) state.completed = {};
+    if (!state.rankings) state.rankings = {};
+    if (!state.playerNickname) {
+      try {
+        state.playerNickname = localStorage.getItem('mousegame_nick') || 'Myszka';
+      } catch(e) {
+        state.playerNickname = 'Myszka';
+      }
+    }
+  } catch(e) {
+    if (!state.completed) state.completed = {};
+    if (!state.rankings) state.rankings = {};
+    if (!state.playerNickname) state.playerNickname = 'Myszka';
   }
-  if (!state.completed) state.completed = {};
-  if (!state.rankings) state.rankings = {};
-  if (!state.playerNickname) {
-    state.playerNickname = localStorage.getItem('mousegame_nick') || 'Myszka';
-  }
-  
-  const menuInput = document.getElementById('menu-player-nick');
-  if (menuInput) {
-    menuInput.value = state.playerNickname;
-  }
-  updateMenuStats();
+
+  try {
+    const menuInput = document.getElementById('menu-player-nick');
+    if (menuInput) {
+      menuInput.value = state.playerNickname || 'Myszka';
+    }
+    updateMenuStats();
+  } catch(e) {}
 };
 
 function updatePlayerNickFromMenu(val) {
   const nick = val.trim() || 'Myszka';
   state.playerNickname = nick;
-  localStorage.setItem('mousegame_nick', nick);
+  try {
+    localStorage.setItem('mousegame_nick', nick);
+  } catch(e) {}
   saveState();
 }
 
@@ -3622,13 +3641,21 @@ function stopActiveGame() {
 function showScreen(id) {
   if (id !== 'result-screen') stopFireworks();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  const el = document.getElementById(id);
+  if (!el) {
+    const menuEl = document.getElementById('menu-screen');
+    if (menuEl) menuEl.classList.add('active');
+    return;
+  }
+  el.classList.add('active');
 }
 
 // =========================================================
 // INIT
 // =========================================================
-loadState();
+try {
+  loadState();
+} catch(e) {}
 
 // =========================================================
 // ROUTER
@@ -3808,10 +3835,19 @@ function retryGame()  { navigate('game/' + currentType + '/' + (currentLevel + 1
 function goMenu()     { navigate('menu'); }
 
 window.addEventListener('popstate', function() {
-  _dispatch(location.hash.slice(1) || 'menu');
+  try {
+    _dispatch(location.hash.slice(1) || 'menu');
+  } catch(e) {
+    showScreen('menu-screen');
+  }
 });
 
-_dispatch(location.hash.slice(1) || 'menu');
+try {
+  loadState();
+  _dispatch(location.hash.slice(1) || 'menu');
+} catch(e) {
+  showScreen('menu-screen');
+}
 
 </script>
 <script>

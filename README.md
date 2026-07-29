@@ -112,10 +112,10 @@ Możesz linkować bezpośrednio do konkretnej gry i poziomu, np.:
 
 ## 🔧 Rozbudowa
 
-Aby dodać nową grę wystarczy:
-1. Stworzyć plik `games/nowa-gra.js` z funkcją `export function init(level) {...}`
-2. Dodać wpis w `core/ui.js` w obiekcie `GAMES`
-3. Dodać wpis w `index.html` w obiekcie `GAME_MODULES`
+Aplikacja posiada architekturę jednoplikową (`index.html`). Aby dodać nową grę lub ćwiczenie:
+1. Dodać definicję nowej gry w obiekcie konfiguracyjnym gier w pliku `index.html` (tytuł, ikona, opis i poziomy).
+2. Zaimplementować silnik/funkcję uruchamiającą nową grę w sekcji skryptów w `index.html`.
+3. Dodać wpis do routera oraz interfejsu wyboru poziomów dla nowej gry.
 
 ---
 

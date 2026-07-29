@@ -1,15 +1,27 @@
 const CACHE = 'szkola-myszki-v4';
-const ASSETS = [
+const LOCAL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap',
 ];
+const FONT_URL = 'https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap';
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil(
+    caches.open(CACHE).then(async cache => {
+      await cache.addAll(LOCAL_ASSETS);
+      try {
+        const fontRes = await fetch(FONT_URL, { mode: 'no-cors' });
+        if (fontRes) {
+          await cache.put(FONT_URL, fontRes);
+        }
+      } catch (err) {
+        // Ignorujemy błąd pobierania czcionek – nie blokuje to instalacji Service Workera
+      }
+    })
+  );
   self.skipWaiting();
 });
 
