@@ -1,10 +1,25 @@
-const CACHE = 'szkola-myszki-v7';
+const CACHE = 'szkola-myszki-v8';
 const LOCAL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './js/main.js',
+  './js/state.js',
+  './js/router.js',
+  './js/engine.js',
+  './js/sound.js',
+  './js/helpers.js',
+  './js/tutorials.js',
+  './js/vconsole.js',
+  './js/fireworks.js',
+  './js/games/click_basic.js',
+  './js/games/click_precision.js',
+  './js/games/double_click.js',
+  './js/games/drag.js',
+  './js/games/maze.js',
+  './js/games/mixed.js'
 ];
 
 self.addEventListener('install', e => {

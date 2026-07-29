@@ -56,9 +56,9 @@ window.addEventListener('unhandledrejection', function(e) {
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
 
   :root {
-    --bg: #070d14;
-    --panel: #0f1c2c;
-    --card: rgba(22, 38, 59, 0.65);
+    --bg: #0b1726;
+    --panel: #132438;
+    --card: rgba(22, 42, 66, 0.75);
     --accent: #00d4ff;
     --green: #00e676;
     --yellow: #ffd740;
@@ -66,9 +66,9 @@ window.addEventListener('unhandledrejection', function(e) {
     --red: #ff1744;
     --purple: #d500f9;
     --pink: #ff4081;
-    --text: #e8f4f8;
-    --muted: #728fce;
-    --border: #1e3552;
+    --text: #f0f8ff;
+    --muted: #8ba5c4;
+    --border: #224263;
     --radius: 20px;
     --glow: 0 0 20px rgba(0,212,255,0.4);
   }
@@ -93,12 +93,14 @@ window.addEventListener('unhandledrejection', function(e) {
     justify-content: flex-start;
     min-height: 100vh;
     padding: 40px 20px;
-    background: radial-gradient(ellipse at 50% 30%, rgba(0, 212, 255, 0.12) 0%, transparent 60%),
-                radial-gradient(ellipse at 20% 20%, #0c1c30 0%, #070d14 70%);
+    background: radial-gradient(ellipse at 50% 25%, rgba(0, 212, 255, 0.22) 0%, transparent 65%),
+                radial-gradient(ellipse at 20% 80%, rgba(0, 230, 118, 0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(213, 0, 249, 0.12) 0%, transparent 60%),
+                #0b1726;
     background-image: 
-      radial-gradient(ellipse at 50% 30%, rgba(0, 212, 255, 0.12) 0%, transparent 60%),
-      linear-gradient(rgba(30, 50, 80, 0.2) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(30, 50, 80, 0.2) 1px, transparent 1px);
+      radial-gradient(ellipse at 50% 25%, rgba(0, 212, 255, 0.22) 0%, transparent 65%),
+      linear-gradient(rgba(40, 75, 115, 0.25) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(40, 75, 115, 0.25) 1px, transparent 1px);
     background-size: 100% 100%, 50px 50px, 50px 50px;
   }
 
@@ -1302,8 +1304,9 @@ window.addEventListener('unhandledrejection', function(e) {
           <li><strong>Przeciąganie i upuszczanie (Drag & Drop):</strong> Rozwija umiejętność chwytania i przenoszenia obiektów.</li>
           <li><strong>Labirynty:</strong> Zaawansowane ćwiczenie ciągłego ruchu kursora bez uderzania o przeszkody.</li>
         </ul>
-        <p class="info-p">
-           <!-- O AUTORZE -->
+      </div>
+      
+      <!-- O AUTORZE -->
       <div class="info-tab-content hidden" id="content-autor">
         <h2 class="info-title">👤 O autorze</h2>
         <p class="info-p">
