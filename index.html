@@ -52,6 +52,9 @@ window.addEventListener('unhandledrejection', function(e) {
   } catch(err) {}
 });
 </script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
 
@@ -1598,6 +1601,11 @@ window.addEventListener('unhandledrejection', function(e) {
       </div>
     </div>
 
+    <div style="font-family:'Fredoka One',cursive; font-size:1rem; color:#fff; margin-top:14px; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+      <span>📈 Wykres Postępu Celności (Recharts):</span>
+    </div>
+    <div id="accuracy-chart-root" style="margin-bottom: 12px;"></div>
+
     <div style="font-family:'Fredoka One',cursive; font-size:1rem; color:#fff; margin-top:10px; margin-bottom:6px;">
       🎯 Celność według trybów gry:
     </div>
@@ -2033,6 +2041,7 @@ window.addEventListener('unhandledrejection', function(e) {
   </div>
 </div>
 
+<script type="module" src="./js/accuracy_chart.js"></script>
 <script type="module" src="./js/main.js"></script>
 <script>
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {

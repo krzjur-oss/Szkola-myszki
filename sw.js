@@ -1,4 +1,4 @@
-const CACHE = 'szkola-myszki-v8';
+const CACHE = 'szkola-myszki-v9';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const LOCAL_ASSETS = [
   './js/tutorials.js',
   './js/vconsole.js',
   './js/fireworks.js',
+  './js/accuracy_chart.js',
   './js/games/click_basic.js',
   './js/games/click_precision.js',
   './js/games/double_click.js',

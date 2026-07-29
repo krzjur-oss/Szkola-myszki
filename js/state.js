@@ -315,6 +315,10 @@ export function openAccuracyModal() {
     }
   }
 
+  if (typeof window.renderAccuracyChart === 'function') {
+    try { window.renderAccuracyChart('accuracy-chart-root'); } catch(e) { console.warn('Accuracy chart error:', e); }
+  }
+
   modal.classList.add('active');
 }
 
