@@ -10,6 +10,7 @@ import {
   initAreaMissHandlers,
   startTimer
 } from '../engine.js';
+import { getAdaptiveModifier } from '../state.js';
 import { onActivate } from '../helpers.js';
 
 export const PR_SHAPES = ['round','square','triangle','star'];
@@ -134,17 +135,23 @@ export function spawnPrecisionTargets(levelIdx) {
   const rect = area.getBoundingClientRect();
   const targets = [];
 
+  const mod = getAdaptiveModifier('click_precision');
+  const sizeFactor = mod.sizeFactor || 1.0;
+  const timeFactor = mod.timeFactor || 1.0;
+
   const panelW = 90;
   const safeRect = { width: rect.width - panelW, height: rect.height };
   const safeOffset = panelW;
 
-  const goodSize = 58 + Math.random() * 22;
+  const rawGoodSize = 58 + Math.random() * 22;
+  const goodSize = Math.max(24, Math.round(rawGoodSize * sizeFactor));
   const gp = randomPos(goodSize, safeRect);
   gp.x += safeOffset;
   targets.push(makeTarget(prTarget.shape, prTarget.color.hex, goodSize, gp, true, levelIdx));
 
   for (let i = 0; i < cfg.badCount; i++) {
-    const size = 50 + Math.random() * 28;
+    const rawBadSize = 50 + Math.random() * 28;
+    const size = Math.max(22, Math.round(rawBadSize * sizeFactor));
     const pos  = randomPos(size, safeRect);
     pos.x += safeOffset;
 
@@ -163,11 +170,12 @@ export function spawnPrecisionTargets(levelIdx) {
   targets.forEach(t => area.appendChild(t));
 
   if (cfg.lifetime > 0) {
+    const lifetime = Math.max(800, Math.round(cfg.lifetime * timeFactor));
     const mySession = gameSession;
     setTimeout(() => {
       if (gameSession === mySession && gameData.time > 0) {
         _pickPrecisionTarget(); spawnPrecisionTargets(levelIdx);
       }
-    }, cfg.lifetime);
+    }, lifetime);
   }
 }

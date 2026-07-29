@@ -10,6 +10,7 @@ import {
   initAreaMissHandlers,
   startTimer
 } from '../engine.js';
+import { getAdaptiveModifier } from '../state.js';
 import { onActivate } from '../helpers.js';
 
 let mixedRoundCount = 0;
@@ -36,13 +37,18 @@ export function spawnMixed(levelIdx) {
   const area = document.getElementById('game-area');
   [...area.querySelectorAll('.target')].forEach(t => t.remove());
 
+  const mod = getAdaptiveModifier('mixed');
+  const sizeFactor = mod.sizeFactor || 1.0;
+  const timeFactor = mod.timeFactor || 1.0;
+
   const type = pickMixedType(levelIdx);
   const rect = area.getBoundingClientRect();
 
   if (type === 'precision') {
     let precDone = false;
 
-    const goodSize = 65 + Math.random() * 20;
+    const rawGoodSize = 65 + Math.random() * 20;
+    const goodSize = Math.max(26, Math.round(rawGoodSize * sizeFactor));
     const goodPos  = randomPos(goodSize, rect);
     const good = document.createElement('div');
     good.className = 'target';
@@ -75,7 +81,8 @@ export function spawnMixed(levelIdx) {
       { shape: 'triangle', color: '#d500f9' },
     ];
     bads.forEach(bad => {
-      const bSize = 58 + Math.random() * 18;
+      const rawBSize = 58 + Math.random() * 18;
+      const bSize = Math.max(24, Math.round(rawBSize * sizeFactor));
       const bPos  = randomPos(bSize, rect);
       const b = document.createElement('div');
       b.className = 'target target-' + bad.shape;
@@ -99,18 +106,20 @@ export function spawnMixed(levelIdx) {
     });
 
     const _gsMxPT = gameSession;
+    const precLifetime = Math.max(1200, Math.round(4000 * timeFactor));
     setTimeout(() => {
       if (precDone || gameSession !== _gsMxPT) return;
       precDone = true;
       [...area.querySelectorAll('.target')].forEach(t => t.remove());
       if (gameData.time > 0) spawnMixed(levelIdx);
-    }, 4000);
+    }, precLifetime);
 
     return;
   }
 
   if (type === 'single') {
-    const size = 65 + Math.random() * 28;
+    const rawSize = 65 + Math.random() * 28;
+    const size = Math.max(26, Math.round(rawSize * sizeFactor));
     const pos  = randomPos(size, rect);
     const t = document.createElement('div');
     t.className = 'target';
@@ -134,17 +143,19 @@ export function spawnMixed(levelIdx) {
     });
     area.appendChild(t);
     const _gsMxS = gameSession;
+    const singleLifetime = Math.max(1000, Math.round(3500 * timeFactor));
     setTimeout(() => {
       if (t.parentNode && gameSession === _gsMxS && !mxsDone) {
         mxsDone = true;
         t.remove();
         if (gameData.time > 0) spawnMixed(levelIdx);
       } else if (t.parentNode) t.remove();
-    }, 3500);
+    }, singleLifetime);
     return;
   }
 
-  const size = 65 + Math.random() * 28;
+  const rawSize = 65 + Math.random() * 28;
+  const size = Math.max(26, Math.round(rawSize * sizeFactor));
   const pos  = randomPos(size, rect);
   const t = document.createElement('div');
   t.className = 'target';
@@ -176,11 +187,12 @@ export function spawnMixed(levelIdx) {
   });
   area.appendChild(t);
   const _gsMxD = gameSession;
+  const doubleLifetime = Math.max(1000, Math.round(3500 * timeFactor));
   setTimeout(() => {
     if (t.parentNode && gameSession === _gsMxD && !mxdDone) {
       mxdDone = true;
       t.remove();
       if (gameData.time > 0) spawnMixed(levelIdx);
     } else if (t.parentNode) t.remove();
-  }, 3500);
+  }, doubleLifetime);
 }

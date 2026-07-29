@@ -10,6 +10,7 @@ import {
   initAreaMissHandlers,
   startTimer
 } from '../engine.js';
+import { getAdaptiveModifier } from '../state.js';
 import { onActivate } from '../helpers.js';
 
 export const DOUBLE_CFGS = [
@@ -30,8 +31,15 @@ export function spawnDoubleTarget(cfg) {
   const area = document.getElementById('game-area');
   [...area.querySelectorAll('.target')].forEach(t => t.remove());
 
+  const mod = getAdaptiveModifier('double_click');
+  const sizeFactor = mod.sizeFactor || 1.0;
+  const timeFactor = mod.timeFactor || 1.0;
+
   const isDouble = !cfg.mix || Math.random() < cfg.ratio;
-  const size = cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize);
+  const rawSize = cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize);
+  const size = Math.max(28, Math.round(rawSize * sizeFactor));
+  const lifetime = Math.max(800, Math.round(cfg.lifetime * timeFactor));
+
   const rect = area.getBoundingClientRect();
   const pos  = randomPos(size, rect);
 
@@ -109,5 +117,5 @@ export function spawnDoubleTarget(cfg) {
       t.remove();
       spawnDoubleTarget(cfg);
     } else if (t.parentNode) t.remove();
-  }, cfg.lifetime);
+  }, lifetime);
 }

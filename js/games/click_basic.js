@@ -10,6 +10,7 @@ import {
   initAreaMissHandlers,
   startTimer
 } from '../engine.js';
+import { getAdaptiveModifier } from '../state.js';
 import { onActivate } from '../helpers.js';
 
 export const CLICK_BASIC_CFGS = [
@@ -29,7 +30,15 @@ export function spawnTarget_basic(cfg) {
   if (gameData.time <= 0) return;
   const area = document.getElementById('game-area');
   const rect = area.getBoundingClientRect();
-  const size = cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize);
+
+  const mod = getAdaptiveModifier('click_basic');
+  const sizeFactor = mod.sizeFactor || 1.0;
+  const timeFactor = mod.timeFactor || 1.0;
+
+  const rawSize = cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize);
+  const size = Math.max(22, Math.round(rawSize * sizeFactor));
+  const lifetime = Math.max(500, Math.round(cfg.lifetime * timeFactor));
+
   const pos  = randomPos(size, rect);
   const colors = ['#00d4ff','#00e676','#ffd740','#ff4081','#d500f9','#ff6d00'];
   const col  = colors[Math.floor(Math.random() * colors.length)];
@@ -69,5 +78,5 @@ export function spawnTarget_basic(cfg) {
       t.remove();
       spawnTarget_basic(cfg);
     } else if (t.parentNode) t.remove();
-  }, cfg.lifetime);
+  }, lifetime);
 }

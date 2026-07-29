@@ -837,6 +837,213 @@ window.addEventListener('unhandledrejection', function(e) {
   }
   @keyframes trailFade { to { opacity: 0; transform: translate(-50%,-50%) scale(0); } }
 
+  /* ADAPTIVE DIFFICULTY & ACCURACY ANALYSIS STYLES */
+  .menu-adaptive-card {
+    background: rgba(15, 28, 44, 0.85);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 24px;
+    max-width: 760px;
+    width: 100%;
+    margin-bottom: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .adaptive-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  .adaptive-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.15rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .adaptive-switch-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #fff;
+    user-select: none;
+  }
+  .adaptive-switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 13px;
+    transition: background 0.3s;
+  }
+  .adaptive-switch input { opacity: 0; width: 0; height: 0; }
+  .adaptive-slider {
+    position: absolute;
+    inset: 0;
+    border-radius: 13px;
+    border: 1px solid var(--border);
+    transition: 0.3s;
+  }
+  .adaptive-slider::before {
+    content: '';
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    bottom: 2px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.3s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  }
+  .adaptive-switch input:checked + .adaptive-slider {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .adaptive-switch input:checked + .adaptive-slider::before {
+    transform: translateX(22px);
+    background: #000;
+  }
+  .adaptive-info-text {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .btn-accuracy-modal {
+    align-self: flex-start;
+    background: rgba(0,212,255,0.12);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-accuracy-modal:hover {
+    background: var(--accent);
+    color: #000;
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(0,212,255,0.4);
+  }
+
+  /* HUD & LEVEL ADAPTIVE BADGES */
+  .hud-adaptive-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    margin-left: 10px;
+    border: 1px solid;
+    animation: badgePulse 2s infinite alternate;
+  }
+  @keyframes badgePulse {
+    0% { opacity: 0.85; transform: scale(0.98); }
+    100% { opacity: 1; transform: scale(1.02); }
+  }
+  .adaptive-normal { background: rgba(255,255,255,0.06); border-color: var(--border); color: var(--muted); }
+  .adaptive-balanced { background: rgba(0,212,255,0.15); border-color: var(--accent); color: var(--accent); }
+  .adaptive-challenge { background: rgba(255,109,0,0.18); border-color: var(--orange); color: var(--orange); }
+  .adaptive-support { background: rgba(0,230,118,0.18); border-color: var(--green); color: var(--green); }
+
+  .level-adaptive-banner {
+    width: 100%;
+    max-width: 760px;
+    margin-bottom: 20px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-weight: 800;
+    font-size: 0.92rem;
+    text-align: left;
+    border: 1px solid;
+  }
+
+  .res-adaptive-container {
+    width: 100%;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+  }
+  .res-adaptive-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.88rem;
+    border: 1px solid;
+    width: fit-content;
+  }
+
+  /* ACCURACY MODAL TABLE */
+  .accuracy-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+    margin: 15px 0;
+  }
+  .acc-stat-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px;
+    text-align: center;
+  }
+  .acc-stat-val {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: var(--accent);
+  }
+  .acc-stat-lbl {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .acc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+  }
+  .acc-table th {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .acc-table td {
+    padding: 8px 6px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    border-bottom: 1px dashed rgba(255,255,255,0.05);
+  }
+
   /* SOUND TOGGLE BUTTON */
   .sound-control-wrapper {
     position: fixed;
@@ -1365,6 +1572,57 @@ window.addEventListener('unhandledrejection', function(e) {
   </div>
 </div>
 
+<!-- ACCURACY & ADAPTIVE MODAL -->
+<div class="tutorial-overlay hidden" id="accuracy-modal" onclick="if(event.target === this) closeAccuracyModal()">
+  <div class="info-box" style="max-width: 600px;">
+    <button class="info-close-btn" onclick="closeAccuracyModal()">×</button>
+    <h2 class="info-title" style="display:flex; align-items:center; gap:10px;">
+      <span>📊</span> Analiza Celności & Poziom Adaptacyjny
+    </h2>
+    <p class="info-p" style="margin-bottom: 12px;">
+      System analizuje ostatnie 25 rozgrywek i wylicza optymalną trudność.
+    </p>
+
+    <div class="accuracy-stats-grid">
+      <div class="acc-stat-box">
+        <div class="acc-stat-val" id="acc-modal-overall">0%</div>
+        <div class="acc-stat-lbl">Śr. Celność</div>
+      </div>
+      <div class="acc-stat-box">
+        <div class="acc-stat-val" style="color:var(--yellow);" id="acc-modal-games">0</div>
+        <div class="acc-stat-lbl">Rozegrane Gier</div>
+      </div>
+      <div class="acc-stat-box">
+        <div class="acc-stat-val" style="color:var(--green); font-size:1.1rem;" id="acc-modal-rating">NOWIK</div>
+        <div class="acc-stat-lbl">Ranga Gracza</div>
+      </div>
+    </div>
+
+    <div style="font-family:'Fredoka One',cursive; font-size:1rem; color:#fff; margin-top:10px; margin-bottom:6px;">
+      🎯 Celność według trybów gry:
+    </div>
+    <table class="acc-table">
+      <thead>
+        <tr>
+          <th style="text-align:left;">Tryb Gry</th>
+          <th style="text-align:center;">Mecze</th>
+          <th style="text-align:right;">Celność</th>
+        </tr>
+      </thead>
+      <tbody id="acc-modal-table-body">
+        <!-- Dynamically filled -->
+      </tbody>
+    </table>
+
+    <div style="background: rgba(0,212,255,0.08); border: 1px solid var(--accent); border-radius: 12px; padding: 12px 16px; margin-top: 10px; font-size: 0.88rem; color: #fff; line-height: 1.4;">
+      <strong style="color:var(--accent);">💡 Rekomendacja Systemu:</strong>
+      <div id="acc-modal-advice" style="margin-top: 4px; color: var(--muted);"></div>
+    </div>
+
+    <button class="btn btn-primary" style="margin-top: 15px;" onclick="closeAccuracyModal()">Zamknij</button>
+  </div>
+</div>
+
 <!-- MENU -->
 <div class="screen active" id="menu-screen">
   <div class="logo">
@@ -1425,6 +1683,33 @@ window.addEventListener('unhandledrejection', function(e) {
     <div class="stat-item">
       <div class="stat-value" id="best-acc">-</div>
       <div class="stat-label">Najlepsza dokładność</div>
+    </div>
+  </div>
+
+  <!-- ADAPTIVE DIFFICULTY & ACCURACY CARD -->
+  <div class="menu-adaptive-card">
+    <div class="adaptive-header-row">
+      <div class="adaptive-title">
+        <span>⚡</span> Trudność Adaptacyjna & Analiza
+      </div>
+      <label class="adaptive-switch-label" title="Włącz lub wyłącz automatyczne dostosowywanie wielkości celów i czasu">
+        <span>Tryb Adaptacyjny:</span>
+        <div class="adaptive-switch">
+          <input type="checkbox" id="menu-adaptive-toggle" onchange="setAdaptiveDifficulty(this.checked)">
+          <span class="adaptive-slider"></span>
+        </div>
+      </label>
+    </div>
+    <div class="adaptive-info-text" id="menu-adaptive-desc">
+      System analizuje Twoją celność i automatycznie dopasowuje wielkość celów oraz tempo rozgrywki.
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:4px;">
+      <div style="font-size:0.85rem; font-weight:800; color:var(--accent);" id="menu-accuracy-rating">
+        Zagraj pierwsze gry, by stworzyć profil!
+      </div>
+      <button class="btn-accuracy-modal" onclick="openAccuracyModal()">
+        📊 Analiza Celności
+      </button>
     </div>
   </div>
 
@@ -1610,6 +1895,7 @@ window.addEventListener('unhandledrejection', function(e) {
     <button class="btn-back" onclick="navigate('menu')" ontouchend="event.preventDefault();navigate('menu')">← Menu</button>
     <div id="level-game-title" class="level-game-title"></div>
   </div>
+  <div id="level-adaptive-banner" class="level-adaptive-banner" style="display:none;"></div>
   <div id="level-cards" class="level-cards"></div>
 </div>
 
@@ -1617,7 +1903,10 @@ window.addEventListener('unhandledrejection', function(e) {
   <div class="game-header">
     <button class="back-btn" onclick="goMenu()">← Menu</button>
     <div class="game-info">
-      <div class="game-title" id="g-title">Gra</div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="game-title" id="g-title">Gra</div>
+        <div id="hud-adaptive-badge" class="hud-adaptive-badge" style="display:none;"></div>
+      </div>
       <div class="game-instruction" id="g-instruction">Instrukcja</div>
     </div>
     <div class="game-hud">
@@ -1681,6 +1970,20 @@ window.addEventListener('unhandledrejection', function(e) {
     <div class="result-time-row" id="res-time-row">
       <span>⏱ Czas gry:</span>
       <span class="result-time-val" id="r-time">—</span>
+    </div>
+
+    <!-- ADAPTIVE SUMMARY IN RESULT SCREEN -->
+    <div class="res-adaptive-container" id="res-adaptive-container">
+      <div style="display:flex; align-items:center; justify-space-between; width:100%; gap:10px;">
+        <div id="res-adaptive-status" class="res-adaptive-badge adaptive-balanced">⚡ Adaptacja: OPTYMALNA</div>
+        <label class="adaptive-switch-label" style="font-size:0.8rem; font-weight:700;">
+          <input type="checkbox" id="res-adaptive-checkbox" onchange="setAdaptiveDifficulty(this.checked); renderResultAdaptiveInfo(currentType);">
+          <span>Włącz Adaptację</span>
+        </label>
+      </div>
+      <div id="res-adaptive-detail" style="font-size:0.82rem; color:var(--muted); line-height:1.35; margin-top:4px;">
+        Trudność adaptacyjna analizuje Twoje cele i dostosowuje ich rozmiar.
+      </div>
     </div>
 
     <!-- TROPHY UNLOCKED BANNER -->

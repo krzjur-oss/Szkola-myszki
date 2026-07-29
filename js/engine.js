@@ -2,7 +2,7 @@
 // CORE GAME ENGINE
 // =========================================================
 import { SoundFX } from './sound.js';
-import { state, saveState, addScoreToRanking, renderResultRanking, setCurrentScoreEntry } from './state.js';
+import { state, saveState, addScoreToRanking, renderResultRanking, setCurrentScoreEntry, recordGamePerformance, getAdaptiveModifier } from './state.js';
 import { eventPos } from './helpers.js';
 import { animateStars, startFireworks, stopFireworks } from './fireworks.js';
 
@@ -59,6 +59,7 @@ export function updateHUD() {
   const elMiss = document.getElementById('hud-miss');
   const elTime = document.getElementById('hud-time');
   const elProg = document.getElementById('prog-bar');
+  const elAdaptive = document.getElementById('hud-adaptive-badge');
 
   if (elScore) elScore.textContent = gameData.score;
   if (elHits) elHits.textContent = gameData.hits;
@@ -72,6 +73,17 @@ export function updateHUD() {
       pct > 50 ? 'linear-gradient(90deg,var(--accent),var(--purple))' :
       pct > 25 ? 'linear-gradient(90deg,var(--yellow),var(--orange))' :
                  'linear-gradient(90deg,var(--red),var(--orange))';
+  }
+
+  if (elAdaptive) {
+    const mod = getAdaptiveModifier(currentType);
+    if (mod.active) {
+      elAdaptive.style.display = 'inline-flex';
+      elAdaptive.className = 'hud-adaptive-badge ' + mod.badgeClass;
+      elAdaptive.innerHTML = mod.badgeText;
+    } else {
+      elAdaptive.style.display = 'none';
+    }
   }
 }
 
@@ -329,17 +341,45 @@ export function endGame() {
   const entry = addScoreToRanking(currentType, currentLevel, nick, gameData.score, acc, stars);
   setCurrentScoreEntry(entry);
 
+  recordGamePerformance(currentType, currentLevel, gameData.hits, gameData.miss, acc, gameData.score, stars);
+
   const nickInput = document.getElementById('player-nick');
   if (nickInput) {
     nickInput.value = nick;
   }
   renderResultRanking(currentType, currentLevel);
+  renderResultAdaptiveInfo(currentType);
 
   saveState();
 
   if (window.showScreen) window.showScreen('result-screen');
   startFireworks(stars);
 }
+
+export function renderResultAdaptiveInfo(type) {
+  const container = document.getElementById('res-adaptive-container');
+  if (!container) return;
+
+  const mod = getAdaptiveModifier(type);
+  const statusEl = document.getElementById('res-adaptive-status');
+  const detailEl = document.getElementById('res-adaptive-detail');
+  const toggleEl = document.getElementById('res-adaptive-checkbox');
+
+  if (toggleEl) {
+    toggleEl.checked = !!state.adaptiveDifficulty;
+  }
+
+  if (statusEl) {
+    statusEl.textContent = mod.badgeText;
+    statusEl.className = 'res-adaptive-badge ' + mod.badgeClass;
+  }
+
+  if (detailEl) {
+    detailEl.textContent = mod.detailText;
+  }
+}
+
+window.renderResultAdaptiveInfo = renderResultAdaptiveInfo;
 
 // Global touch ring handler
 document.addEventListener('touchstart', function(e) {

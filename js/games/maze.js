@@ -9,6 +9,7 @@ import {
   startTimer,
   endGame
 } from '../engine.js';
+import { getAdaptiveModifier } from '../state.js';
 
 let mazeCtx, mazeCanvas, mazeData = {};
 
@@ -41,7 +42,12 @@ export function startMaze(cfg, levelIdx) {
   } else if (isSmallScreen) {
     baseCellSize = levelIdx === 0 ? 50 : levelIdx === 1 ? 38 : 28;
   }
-  const cellSize = baseCellSize;
+
+  const mod = getAdaptiveModifier('maze');
+  const sizeFactor = mod.sizeFactor || 1.0;
+  const timeFactor = mod.timeFactor || 1.0;
+
+  const cellSize = Math.max(22, Math.round(baseCellSize * sizeFactor));
 
   const cols = Math.max(Math.floor((canvas.width  - 20) / cellSize), 4);
   const rows = Math.max(Math.floor((canvas.height - 60) / cellSize), 4);
@@ -50,9 +56,10 @@ export function startMaze(cfg, levelIdx) {
   const offsetX = Math.floor((canvas.width  - cols * cellSize) / 2);
   const offsetY = 30;
 
-  const wallMargin = isSmallTouch 
+  const rawMargin = isSmallTouch 
     ? Math.max(2, Math.floor(cellSize * 0.14))
     : Math.max(4, Math.min(10, Math.floor(cellSize * 0.22)));
+  const wallMargin = Math.max(2, Math.round(rawMargin * sizeFactor));
   const distMultiplier = isSmallTouch ? 2.2 : isTouchDevice ? 1.8 : 1.2;
   const unfreezeMultiplier = isSmallTouch ? 1.2 : 0.8;
   const touchOffsetY = isSmallTouch ? -12 : 0;
@@ -96,8 +103,9 @@ export function startMaze(cfg, levelIdx) {
 
   drawMaze();
 
-  gameData.maxTime = cfg.time || 60;
-  gameData.time = gameData.maxTime;
+  const mazeTime = Math.max(20, Math.round((cfg.time || 60) * timeFactor));
+  gameData.maxTime = mazeTime;
+  gameData.time = mazeTime;
   startTimer();
 }
 

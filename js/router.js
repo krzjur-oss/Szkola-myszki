@@ -1,7 +1,7 @@
 // =========================================================
 // ROUTER & NAVIGATION
 // =========================================================
-import { state, getStars, updateMenuStats } from './state.js';
+import { state, getStars, updateMenuStats, getAdaptiveModifier } from './state.js';
 import { showTutorial } from './tutorials.js';
 import { stopFireworks } from './fireworks.js';
 import {
@@ -105,6 +105,19 @@ export function showLevelScreen(gameId) {
   if (!meta) { navigate('menu'); return; }
   document.getElementById('level-game-title').innerHTML =
     '<span>' + meta.icon + '</span><span style="color:' + meta.color + '">' + meta.title + '</span>';
+
+  const adaptiveBanner = document.getElementById('level-adaptive-banner');
+  if (adaptiveBanner) {
+    const mod = getAdaptiveModifier(gameId);
+    if (mod.active) {
+      adaptiveBanner.style.display = 'flex';
+      adaptiveBanner.className = 'level-adaptive-banner ' + mod.badgeClass;
+      adaptiveBanner.innerHTML = mod.badgeText + `<br><small style="font-size:0.8rem; font-weight:400; opacity:0.9;">${mod.detailText}</small>`;
+    } else {
+      adaptiveBanner.style.display = 'none';
+    }
+  }
+
   const cards = document.getElementById('level-cards');
   const rows = meta.levels.map(function(lv, i) {
     const s = getStars(gameId, i);
