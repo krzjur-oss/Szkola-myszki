@@ -224,11 +224,25 @@ function onMazeMouse(e) {
   if (mx < 0 || my < 0 || mx > mazeCanvas.width || my > mazeCanvas.height) return;
   const {offsetX, offsetY, cols, rows, maze, startX, startY, endCol, endRow} = mazeData;
 
+  // 1. IF FROZEN, DO NOT CHECK WALLS OR DISTANCE; ONLY UNFREEZE IF CLOSE TO START
+  if (mazeData.frozen) {
+    const startDx = mx - startX, startDy = my - startY;
+    const unfreezeMult = mazeData.unfreezeMultiplier || 0.8;
+    if (Math.sqrt(startDx*startDx + startDy*startDy) < CELLSZ * unfreezeMult) {
+      mazeData.frozen = false;
+      mazeData.ballX = startX;
+      mazeData.ballY = startY;
+    }
+    drawMaze();
+    return;
+  }
+
+  // 2. CHECK DISTANCE FROM BALL (TOO FAST MOVEMENT)
   const dx = mx - mazeData.ballX;
   const dy = my - mazeData.ballY;
   const dist = Math.sqrt(dx*dx + dy*dy);
   const distMult = mazeData.distMultiplier || 1.2;
-  if (!mazeData.frozen && dist > CELLSZ * distMult) {
+  if (dist > CELLSZ * distMult) {
     mazeData.ballX = startX;
     mazeData.ballY = startY;
     mazeData.hitWall = true;
@@ -239,6 +253,7 @@ function onMazeMouse(e) {
     return;
   }
 
+  // 3. CHECK WALL COLLISIONS
   const col = Math.floor((mx - offsetX) / CELLSZ);
   const row = Math.floor((my - offsetY) / CELLSZ);
   const ballCol = Math.floor((mazeData.ballX - offsetX) / CELLSZ);
@@ -278,17 +293,6 @@ function onMazeMouse(e) {
     addMiss(mx, my, 'maze_wall');
     drawMaze();
     return;
-  }
-
-  if (mazeData.frozen) {
-    const startDx = mx - startX, startDy = my - startY;
-    const unfreezeMult = mazeData.unfreezeMultiplier || 0.8;
-    if (Math.sqrt(startDx*startDx + startDy*startDy) < CELLSZ * unfreezeMult) {
-      mazeData.frozen = false;
-    } else {
-      drawMaze();
-      return;
-    }
   }
 
   mazeData.ballX = mx;
