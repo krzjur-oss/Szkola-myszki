@@ -11,6 +11,24 @@
 <meta name="apple-mobile-web-app-title" content="Szkoła Myszki">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script>
+window.addEventListener('error', function() {
+  try {
+    if (!document.querySelector('.screen.active')) {
+      var m = document.getElementById('menu-screen');
+      if (m) m.classList.add('active');
+    }
+  } catch(e) {}
+});
+window.addEventListener('unhandledrejection', function() {
+  try {
+    if (!document.querySelector('.screen.active')) {
+      var m = document.getElementById('menu-screen');
+      if (m) m.classList.add('active');
+    }
+  } catch(e) {}
+});
+</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
 
@@ -1689,7 +1707,7 @@ const SoundFX = {
     this.init();
     if (!this.ctx) return;
     if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      try { this.ctx.resume().catch(function(){}); } catch(e) {}
     }
     const now = this.ctx.currentTime;
     try {
@@ -2903,14 +2921,36 @@ function startMaze(cfg, levelIdx) {
   mazeCanvas = canvas;
   mazeCtx = canvas.getContext('2d');
 
-  // Rozmiar labiryntu zależy od poziomu trudności
-  const cellSize = levelIdx === 0 ? 48 : levelIdx === 1 ? 36 : 26;
+  // Automatyczne wykrywanie wielkości ekranu i typu urządzenia (ekran dotykowy)
+  const screenW = window.innerWidth || canvas.width;
+  const screenH = window.innerHeight || canvas.height;
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  const isSmallScreen = screenW < 768 || canvas.width < 550;
+  const isSmallTouch = isTouchDevice && isSmallScreen;
+
+  // Rozmiar komórki labiryntu dopasowany dynamicznie do poziomu i wielkości ekranu
+  let baseCellSize = levelIdx === 0 ? 48 : levelIdx === 1 ? 36 : 26;
+  if (isSmallTouch) {
+    baseCellSize = levelIdx === 0 ? 56 : levelIdx === 1 ? 44 : 34;
+  } else if (isSmallScreen) {
+    baseCellSize = levelIdx === 0 ? 50 : levelIdx === 1 ? 38 : 28;
+  }
+  const cellSize = baseCellSize;
+
   const cols = Math.max(Math.floor((canvas.width  - 20) / cellSize), 4);
   const rows = Math.max(Math.floor((canvas.height - 60) / cellSize), 4);
 
   const maze = generateMaze(cols, rows, levelIdx, cellSize);
   const offsetX = Math.floor((canvas.width  - cols * cellSize) / 2);
   const offsetY = 30;
+
+  // Dopasowanie tolerancji kolizji, marginesów ścian i progu powrotu na start
+  const wallMargin = isSmallTouch 
+    ? Math.max(2, Math.floor(cellSize * 0.14))
+    : Math.max(4, Math.min(10, Math.floor(cellSize * 0.22)));
+  const distMultiplier = isSmallTouch ? 2.2 : isTouchDevice ? 1.8 : 1.2;
+  const unfreezeMultiplier = isSmallTouch ? 1.2 : 0.8;
+  const touchOffsetY = isSmallTouch ? -12 : 0;
 
   // Setup ResizeObserver to perfectly adjust to resize events
   const resizeObserver = new ResizeObserver(entries => {
@@ -2933,7 +2973,9 @@ function startMaze(cfg, levelIdx) {
     startX: offsetX + cellSize * 0.5, startY: offsetY + cellSize * 0.5,
     endCol: cols - 1, endRow: rows - 1,
     hitWall: false, completed: false, frozen: true, touches: 0,
-    resizeObserver: resizeObserver
+    resizeObserver: resizeObserver,
+    isTouchDevice, isSmallScreen, isSmallTouch,
+    wallMargin, distMultiplier, unfreezeMultiplier, touchOffsetY
   };
 
   // Listen on document so movement is never lost (mouse + touch)
@@ -3045,7 +3087,9 @@ function drawMaze() {
     ctx.fillStyle = `rgba(255,100,100,${0.3 + 0.4 * pulse})`;
     ctx.font = 'bold 12px Nunito, sans-serif';
     ctx.textAlign = 'center';
-    const txt = mazeData.touches === 0 ? 'Zacznij tu! 🖱️' : 'Wróć tu! ↩';
+    const txt = mazeData.touches === 0 
+      ? (mazeData.isTouchDevice ? 'Dotknij tu! 👆' : 'Zacznij tu! 🖱️') 
+      : 'Wróć tu! ↩';
     ctx.fillText(txt, mazeData.startX, mazeData.startY + CELLSZ * 1.3);
     ctx.lineWidth = 1;
 
@@ -3073,7 +3117,8 @@ function onMazeMouse(e) {
   const dx = mx - mazeData.ballX;
   const dy = my - mazeData.ballY;
   const dist = Math.sqrt(dx*dx + dy*dy);
-  if (!mazeData.frozen && dist > CELLSZ * 1.2) {
+  const distMult = mazeData.distMultiplier || 1.2;
+  if (!mazeData.frozen && dist > CELLSZ * distMult) {
     mazeData.ballX = startX;
     mazeData.ballY = startY;
     mazeData.hitWall = true;
@@ -3095,7 +3140,7 @@ function onMazeMouse(e) {
     wallHit = true;
   } else {
     const cellX = offsetX + col * CELLSZ, cellY = offsetY + row * CELLSZ;
-    const margin = 10;
+    const margin = mazeData.wallMargin !== undefined ? mazeData.wallMargin : 10;
     if (col !== ballCol || row !== ballRow) {
       // Moving to new cell - check wall
       const dc = col - ballCol, dr = row - ballRow;
@@ -3131,7 +3176,8 @@ function onMazeMouse(e) {
   // If frozen after wall hit: only unfreeze when cursor/finger is close to start
   if (mazeData.frozen) {
     const startDx = mx - startX, startDy = my - startY;
-    if (Math.sqrt(startDx*startDx + startDy*startDy) < CELLSZ * 0.8) {
+    const unfreezeMult = mazeData.unfreezeMultiplier || 0.8;
+    if (Math.sqrt(startDx*startDx + startDy*startDy) < CELLSZ * unfreezeMult) {
       mazeData.frozen = false;
     } else {
       // Keep ball visible at start while waiting
@@ -3162,7 +3208,8 @@ function onMazeTouchMove(e) {
   e.preventDefault();
   if (!mazeData || !mazeData.maze || mazeData.completed || gameData.time <= 0) return;
   const touch = e.touches[0];
-  onMazeMouse({ clientX: touch.clientX, clientY: touch.clientY });
+  const offsetY = mazeData.touchOffsetY || 0;
+  onMazeMouse({ clientX: touch.clientX, clientY: touch.clientY + offsetY });
 }
 
 // =========================================================
@@ -3851,10 +3898,10 @@ try {
 
 </script>
 <script>
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
   navigator.serviceWorker.register('./sw.js')
-    .then(() => console.log('SW zarejestrowany'))
-    .catch(e => console.warn('SW błąd:', e));
+    .then(function() { console.log('SW zarejestrowany'); })
+    .catch(function(e) { console.warn('SW błąd:', e); });
 }
 </script>
 </body>
