@@ -260,6 +260,8 @@ export function _startGame(type, level) {
   gameData.score = 0;
   gameData.hits = 0;
   gameData.miss = 0;
+  gameData.combo = 0;
+  gameData.maxCombo = 0;
   gameData.time = lvl.time || 30;
   gameData.maxTime = lvl.time || 30;
 

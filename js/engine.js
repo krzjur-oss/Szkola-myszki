@@ -8,8 +8,18 @@ import { animateStars, startFireworks, stopFireworks } from './fireworks.js';
 
 export let currentGame = null;
 export let gameTimer = null;
-export let gameData = { score: 0, hits: 0, miss: 0, time: 30, maxTime: 30 };
+export let gameData = { score: 0, hits: 0, miss: 0, time: 30, maxTime: 30, combo: 0, maxCombo: 0 };
 export let gameSession = 0;
+
+export function getComboMultiplier(combo) {
+  if (combo < 2) return 1.0;
+  if (combo < 4) return 1.1;
+  if (combo < 7) return 1.25;
+  if (combo < 10) return 1.5;
+  if (combo < 15) return 1.75;
+  if (combo < 20) return 2.0;
+  return 2.5;
+}
 
 export let currentType = '';
 export let currentLevel = 0;
@@ -58,6 +68,7 @@ export function updateHUD() {
   const elHits = document.getElementById('hud-hits');
   const elMiss = document.getElementById('hud-miss');
   const elTime = document.getElementById('hud-time');
+  const elCombo = document.getElementById('hud-combo');
   const elProg = document.getElementById('prog-bar');
   const elAdaptive = document.getElementById('hud-adaptive-badge');
 
@@ -65,6 +76,20 @@ export function updateHUD() {
   if (elHits) elHits.textContent = gameData.hits;
   if (elMiss) elMiss.textContent = gameData.miss;
   if (elTime) elTime.textContent = Math.ceil(gameData.time);
+
+  if (elCombo) {
+    const mult = getComboMultiplier(gameData.combo);
+    if (gameData.combo > 1) {
+      elCombo.textContent = `${gameData.combo}🔥 (${mult.toFixed(1)}x)`;
+      elCombo.style.color =
+        gameData.combo >= 15 ? '#ffea00' :
+        gameData.combo >= 10 ? '#ff6d00' :
+        gameData.combo >= 5  ? '#ffd740' : '#d500f9';
+    } else {
+      elCombo.textContent = gameData.combo > 0 ? '1x' : '0x';
+      elCombo.style.color = gameData.combo > 0 ? 'var(--accent)' : 'var(--muted)';
+    }
+  }
 
   if (elProg) {
     const pct = (gameData.time / gameData.maxTime) * 100;
@@ -103,13 +128,34 @@ export function startTimer(onEnd) {
 
 export function addHit(x, y, pts = 100, soundOverride) {
   gameData.hits++;
-  gameData.score += pts;
-  spawnHitEffect(x, y, pts, '#00e676', null, soundOverride);
+  gameData.combo++;
+  if (gameData.combo > gameData.maxCombo) {
+    gameData.maxCombo = gameData.combo;
+  }
+
+  const mult = getComboMultiplier(gameData.combo);
+  const earnedPts = Math.round(pts * mult);
+  gameData.score += earnedPts;
+
+  const label = mult > 1.0 
+    ? `+${earnedPts} 🔥x${mult.toFixed(1)}` 
+    : `+${earnedPts}`;
+
+  spawnHitEffect(x, y, earnedPts, '#00e676', label, soundOverride);
+
+  const elCombo = document.getElementById('hud-combo');
+  if (elCombo && gameData.combo > 1) {
+    elCombo.classList.remove('hud-combo-active');
+    void elCombo.offsetWidth; // trigger reflow
+    elCombo.classList.add('hud-combo-active');
+  }
+
   updateHUD();
 }
 
 export function addMiss(x, y, soundOverride) {
   gameData.miss++;
+  gameData.combo = 0;
   spawnHitEffect(x, y, -10, '#ff1744', '-10', soundOverride);
   updateHUD();
 }
@@ -264,6 +310,8 @@ export function endGame() {
   if (resSub) resSub.textContent = (['Łatwy','Średni','Trudny'][currentLevel] || '') + ' — ' + (config.title || '');
 
   document.getElementById('r-score').textContent = gameData.score;
+  const resMaxCombo = document.getElementById('r-max-combo');
+  if (resMaxCombo) resMaxCombo.textContent = (gameData.maxCombo || 0) + 'x';
   document.getElementById('r-acc').textContent = acc + '%';
   document.getElementById('r-hits').textContent = gameData.hits;
   document.getElementById('r-miss').textContent = gameData.miss;

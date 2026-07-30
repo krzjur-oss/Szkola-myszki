@@ -339,6 +339,15 @@ window.addEventListener('unhandledrejection', function(e) {
   .hud-val { font-family: 'Fredoka One', cursive; font-size: 1.4rem; line-height: 1.1; }
   .hud-lbl { font-size: 0.65rem; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-top: 2px; letter-spacing: 0.5px; }
 
+  .hud-combo-active {
+    animation: comboPop 0.25s ease-out;
+  }
+  @keyframes comboPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.35); filter: brightness(1.3); }
+    100% { transform: scale(1); }
+  }
+
   .progress-bar-wrap {
     height: 6px;
     background: #050a0f;
@@ -2096,6 +2105,10 @@ window.addEventListener('unhandledrejection', function(e) {
         <div class="hud-val" id="hud-score" style="color:var(--yellow)">0</div>
         <div class="hud-lbl">Punkty</div>
       </div>
+      <div class="hud-item" id="hud-combo-container">
+        <div class="hud-val" id="hud-combo" style="color:#d500f9">0x</div>
+        <div class="hud-lbl">Combo</div>
+      </div>
       <div class="hud-item">
         <div class="hud-val" id="hud-hits" style="color:var(--green)">0</div>
         <div class="hud-lbl">Trafienia</div>
@@ -2135,6 +2148,10 @@ window.addEventListener('unhandledrejection', function(e) {
       <div class="result-stat">
         <div class="result-stat-val" style="color:var(--yellow)" id="r-score">0</div>
         <div class="result-stat-lbl">Punkty</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-stat-val" style="color:#d500f9" id="r-max-combo">0x</div>
+        <div class="result-stat-lbl">Max Combo</div>
       </div>
       <div class="result-stat">
         <div class="result-stat-val" style="color:var(--green)" id="r-acc">0%</div>
